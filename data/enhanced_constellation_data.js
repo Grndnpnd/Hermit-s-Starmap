@@ -1,0 +1,565 @@
+// Enhanced Feywild Star Constellation Data
+// Consolidated, non-overlapping seasonal system with state persistence
+
+const ENHANCED_CONSTELLATIONS = [
+    // === YEAR-ROUND CONSTELLATIONS (Always Visible) ===
+    {
+        id: 1,
+        name: "The Centaur",
+        alternateName: "Guided Arrow",
+        shape: "A rearing centaur with a drawn bow pointing southeast",
+        season: "year-round",
+        seasonCategory: "eternal",
+        symbolism: "Guidance, destiny, protection on the road",
+        direction: "Southeast",
+        coordinates: { x: 65, y: 75, direction: "southeast", elevation: "mid" },
+        currentAlignment: "Points southeast—used by navigators toward distant realms",
+        emotionalTriggers: [],
+        visibility: "visible",
+        specialEffects: "Always points to true southeast, brightest during travel decisions",
+        mythicResonance: "guidance",
+        navigationValue: 5, // High value for navigation
+        magicalIntensity: 3
+    },
+    {
+        id: 2,
+        name: "The Mask and Mirror",
+        alternateName: "Twin Reflections",
+        shape: "A stylized mask split by a mirrored crack",
+        season: "year-round",
+        seasonCategory: "eternal",
+        symbolism: "Identity, deception, reflection, duality of truth",
+        direction: "Variable",
+        coordinates: { x: 35, y: 25, direction: "variable", elevation: "high" },
+        currentAlignment: "Shifts position based on observer's nature",
+        emotionalTriggers: ["revelation"],
+        visibility: "visible",
+        specialEffects: "Appears different to each observer; brightest during revelations",
+        mythicResonance: "revelation",
+        navigationValue: 2,
+        magicalIntensity: 5
+    },
+    {
+        id: 3,
+        name: "The Lantern Bearer",
+        alternateName: "Hope's Light",
+        shape: "A cloaked figure holding aloft a flickering flame",
+        season: "year-round",
+        seasonCategory: "eternal",
+        symbolism: "Hope in darkness, guidance through despair, divine protection",
+        direction: "Zenith",
+        coordinates: { x: 50, y: 15, direction: "zenith", elevation: "high" },
+        currentAlignment: "Directly overhead at midnight",
+        emotionalTriggers: [],
+        visibility: "visible",
+        specialEffects: "Flame flickers with the hope in observers' hearts; grants advantage on Insight checks",
+        mythicResonance: "hope",
+        navigationValue: 4,
+        magicalIntensity: 4
+    },
+    {
+        id: 4,
+        name: "The Shattered Path",
+        alternateName: "Broken Road",
+        shape: "A broken star trail across the sky",
+        season: "year-round",
+        seasonCategory: "eternal",
+        symbolism: "Change, catastrophe, transformation, chaos",
+        direction: "Variable",
+        coordinates: { x: 80, y: 45, direction: "variable", elevation: "variable" },
+        currentAlignment: "Never in the same position twice",
+        emotionalTriggers: [],
+        visibility: "visible",
+        specialEffects: "Path cannot be followed directly; appears before major changes",
+        mythicResonance: "transformation",
+        navigationValue: 1, // Unreliable for navigation
+        magicalIntensity: 5
+    },
+
+    // === SPRING CONSTELLATIONS ===
+    {
+        id: 5,
+        name: "The Blooming Fang",
+        alternateName: "Treacherous Beauty",
+        shape: "A flower with fang-like petals curling inward",
+        season: "spring",
+        seasonCategory: "spring",
+        symbolism: "Beauty with danger, hidden threats, false promises",
+        direction: "East",
+        coordinates: { x: 85, y: 65, direction: "east", elevation: "mid" },
+        currentAlignment: "Rises with the dawn during spring months",
+        emotionalTriggers: ["betrayal"],
+        visibility: "visible",
+        specialEffects: "Petals seem to pulse when betrayal is near; warns of false friends",
+        mythicResonance: "betrayal",
+        navigationValue: 3,
+        magicalIntensity: 4
+    },
+    {
+        id: 6,
+        name: "The Lily",
+        alternateName: "Pure Renewal",
+        shape: "A blooming lily with petals reaching skyward",
+        season: "spring",
+        seasonCategory: "spring",
+        symbolism: "Renewal, purity, new beginnings, resurrection",
+        direction: "Northeast",
+        coordinates: { x: 75, y: 30, direction: "northeast", elevation: "mid" },
+        currentAlignment: "Heralds the spring equinox",
+        emotionalTriggers: [],
+        visibility: "visible",
+        specialEffects: "Glows softly during ceremonies of new life and growth rituals",
+        mythicResonance: "renewal",
+        navigationValue: 3,
+        magicalIntensity: 3
+    },
+    {
+        id: 7,
+        name: "The Swan (Upper)",
+        alternateName: "Ascending Grace",
+        shape: "A graceful swan in flight, wings spread wide",
+        season: "spring",
+        seasonCategory: "spring",
+        symbolism: "Grace, ascension, transformation, freedom",
+        direction: "Southeast",
+        coordinates: { x: 70, y: 55, direction: "southeast", elevation: "mid-high" },
+        currentAlignment: "Flies highest during spring storms",
+        emotionalTriggers: [],
+        visibility: "visible",
+        specialEffects: "Wings seem to beat slowly; inspires courage for new journeys",
+        mythicResonance: "transformation",
+        navigationValue: 3,
+        magicalIntensity: 3
+    },
+
+    // === SUMMER CONSTELLATIONS ===
+    {
+        id: 8,
+        name: "The Silent Step",
+        alternateName: "Hunter's Trail",
+        shape: "Pawprints leading across the stars in a hunting pattern",
+        season: "summer",
+        seasonCategory: "summer",
+        symbolism: "Stealth, hunting, patience, survival",
+        direction: "North",
+        coordinates: { x: 45, y: 35, direction: "north", elevation: "mid" },
+        currentAlignment: "Follows the prey across summer skies",
+        emotionalTriggers: [],
+        visibility: "visible",
+        specialEffects: "Pawprints fade and reappear; hunters claim luck improves beneath it",
+        mythicResonance: "stealth",
+        navigationValue: 4,
+        magicalIntensity: 2
+    },
+    {
+        id: 9,
+        name: "The Spider",
+        alternateName: "The Great Weaver",
+        shape: "An eight-legged spider crouched with web lines extending",
+        season: "summer",
+        seasonCategory: "summer",
+        symbolism: "Patience, crafting, fate weaving, interconnection",
+        direction: "East",
+        coordinates: { x: 85, y: 35, direction: "east", elevation: "mid-high" },
+        currentAlignment: "Weaves its web across the eastern sky",
+        emotionalTriggers: ["bargain"],
+        visibility: "visible",
+        specialEffects: "Web lines glow when destinies intersect; strongest during bargains",
+        mythicResonance: "fate",
+        navigationValue: 2,
+        magicalIntensity: 4
+    },
+    {
+        id: 10,
+        name: "The Flying Mantis",
+        alternateName: "Patient Hunter",
+        shape: "A winged mantis mid-flight with foreclaws extended",
+        season: "summer",
+        seasonCategory: "summer",
+        symbolism: "Patience, precision, spiritual hunting, meditation",
+        direction: "East-Northeast",
+        coordinates: { x: 80, y: 25, direction: "east-northeast", elevation: "high" },
+        currentAlignment: "Stalks across summer dawns",
+        emotionalTriggers: [],
+        visibility: "visible",
+        specialEffects: "Appears clearly to those practicing patience and watching",
+        mythicResonance: "vigilance",
+        navigationValue: 3,
+        magicalIntensity: 3
+    },
+
+    // === AUTUMN CONSTELLATIONS ===
+    {
+        id: 11,
+        name: "The Inverted Crown",
+        alternateName: "Fallen Majesty",
+        shape: "A crown with stars spilling downward like lost jewels",
+        season: "autumn",
+        seasonCategory: "autumn",
+        symbolism: "Fallen power, humility, the temporary nature of authority",
+        direction: "West",
+        coordinates: { x: 15, y: 40, direction: "west", elevation: "mid" },
+        currentAlignment: "Sets with the dying year's power",
+        emotionalTriggers: [],
+        visibility: "visible",
+        specialEffects: "When seen upside-down, foretells political change; jewels fall like tears",
+        mythicResonance: "power",
+        navigationValue: 3,
+        magicalIntensity: 4
+    },
+    {
+        id: 12,
+        name: "The Heartroot",
+        alternateName: "Memory's Anchor",
+        shape: "A knot of stars in the shape of roots curling inward toward a bright center",
+        season: "autumn",
+        seasonCategory: "autumn",
+        symbolism: "Memory, ancestry, emotional truth, connection to the past",
+        direction: "Southwest",
+        coordinates: { x: 25, y: 70, direction: "southwest", elevation: "low" },
+        currentAlignment: "Visible over sacred groves and ancient sites",
+        emotionalTriggers: [],
+        visibility: "visible",
+        specialEffects: "Pulses gently during ancestor veneration; strongest at family gatherings",
+        mythicResonance: "memory",
+        navigationValue: 2,
+        magicalIntensity: 4
+    },
+    {
+        id: 13,
+        name: "The Chalice",
+        alternateName: "Sacred Vessel",
+        shape: "A goblet-like form with five radiant stars forming the rim",
+        season: "autumn",
+        seasonCategory: "autumn",
+        symbolism: "Sacrifice, offerings, spiritual fulfillment, harvest gratitude",
+        direction: "South",
+        coordinates: { x: 50, y: 80, direction: "south", elevation: "low" },
+        currentAlignment: "Rests on the southern horizon during harvest festivals",
+        emotionalTriggers: [],
+        visibility: "visible",
+        specialEffects: "Shimmers brightest during rituals of thanksgiving and sacrifice",
+        mythicResonance: "sacrifice",
+        navigationValue: 3,
+        magicalIntensity: 4
+    },
+
+    // === WINTER CONSTELLATIONS ===
+    {
+        id: 14,
+        name: "The Mourning Tree",
+        alternateName: "Sorrow's Sentinel",
+        shape: "A leafless tree with stars dripping from its branches like tears",
+        season: "winter",
+        seasonCategory: "winter",
+        symbolism: "Loss, grief, acceptance, the beauty in endings",
+        direction: "North",
+        coordinates: { x: 50, y: 30, direction: "north", elevation: "mid" },
+        currentAlignment: "Stands vigil over the northern wastes",
+        emotionalTriggers: ["mourning"],
+        visibility: "visible",
+        specialEffects: "Star-tears fall most clearly after loss; provides comfort in grief",
+        mythicResonance: "mourning",
+        navigationValue: 2,
+        magicalIntensity: 5
+    },
+    {
+        id: 15,
+        name: "The Driftcloak",
+        alternateName: "Wanderer's Mantle",
+        shape: "A twisting path resembling a windswept cloak flowing across the sky",
+        season: "winter",
+        seasonCategory: "winter",
+        symbolism: "Journey, transition, leaving the past behind, exile",
+        direction: "Northwest",
+        coordinates: { x: 20, y: 25, direction: "northwest", elevation: "mid" },
+        currentAlignment: "Flows across winter skies like a traveling companion",
+        emotionalTriggers: [],
+        visibility: "visible",
+        specialEffects: "Seems to ripple and flow; guides those leaving one life for another",
+        mythicResonance: "transition",
+        navigationValue: 4,
+        magicalIntensity: 3
+    },
+    {
+        id: 16,
+        name: "The Swan (Lower)",
+        alternateName: "Resting Grace",
+        shape: "A swan near water's edge, wings folded, head turned in contemplation",
+        season: "winter",
+        seasonCategory: "winter",
+        symbolism: "Rest, reflection, inner journey, preparation for rebirth",
+        direction: "Southwest",
+        coordinates: { x: 30, y: 75, direction: "southwest", elevation: "low" },
+        currentAlignment: "Rests on winter waters before spring's return",
+        emotionalTriggers: [],
+        visibility: "visible",
+        specialEffects: "Sometimes appears as a reflection; heralds major life transitions",
+        mythicResonance: "rebirth",
+        navigationValue: 2,
+        magicalIntensity: 4
+    },
+
+    // === RARE/SEASONAL VARIANTS ===
+    {
+        id: 17,
+        name: "The Sibling Moons",
+        alternateName: "Twin Destinies",
+        shape: "Two overlapping crescent moons in eternal dance",
+        season: "equinox", // Special: appears only during equinoxes
+        seasonCategory: "special",
+        symbolism: "Duality, balance, difficult choices, twin fates",
+        direction: "Zenith",
+        coordinates: { x: 50, y: 10, direction: "zenith", elevation: "high" },
+        currentAlignment: "Appears only when day and night are in perfect balance",
+        emotionalTriggers: [],
+        visibility: "visible",
+        specialEffects: "Only visible during spring and autumn equinoxes; guides difficult decisions",
+        mythicResonance: "duality",
+        navigationValue: 5, // Extremely valuable when visible
+        magicalIntensity: 5
+    },
+    {
+        id: 18,
+        name: "The Mask Twins",
+        alternateName: "Truth and Lies",
+        shape: "Two mirrored masks—one upright showing joy, one inverted showing sorrow",
+        season: "solstice", // Special: appears only during solstices
+        seasonCategory: "special",
+        symbolism: "Hidden truth, revealed secrets, the duality of all things",
+        direction: "Variable",
+        coordinates: { x: 65, y: 45, direction: "variable", elevation: "mid" },
+        currentAlignment: "Positions shift to reveal hidden truths",
+        emotionalTriggers: ["revelation"],
+        visibility: "visible",
+        specialEffects: "Most vivid during moments of deception or truth revelation",
+        mythicResonance: "duality",
+        navigationValue: 3,
+        magicalIntensity: 5
+    },
+    {
+        id: 19,
+        name: "The Dreaming Head",
+        alternateName: "Prophet's Vision",
+        shape: "A serene head with closed eyes and flowing hair made of stardust",
+        season: "eclipse", // Special: appears only during eclipses
+        seasonCategory: "special",
+        symbolism: "Prophecy, dreams made manifest, the veil between worlds",
+        direction: "South",
+        coordinates: { x: 45, y: 85, direction: "south", elevation: "low" },
+        currentAlignment: "Sleeps until the stars align for prophecy",
+        emotionalTriggers: [],
+        visibility: "visible",
+        specialEffects: "Eyes open only during eclipses; visions flow like stardust",
+        mythicResonance: "prophecy",
+        navigationValue: 1, // Unreliable timing
+        magicalIntensity: 5
+    },
+    {
+        id: 20,
+        name: "The Antler Tree",
+        alternateName: "Season's Crown",
+        shape: "A tree-like figure with branches that form intricate antler patterns",
+        season: "seasonal-transition", // Special: appears during season changes
+        seasonCategory: "special",
+        symbolism: "Natural cycles, wisdom of the seasons, growth and renewal",
+        direction: "Northwest",
+        coordinates: { x: 20, y: 35, direction: "northwest", elevation: "high" },
+        currentAlignment: "Branches shift to match the incoming season",
+        emotionalTriggers: [],
+        visibility: "visible",
+        specialEffects: "Antlers change pattern with each season; strongest during transitions",
+        mythicResonance: "wisdom",
+        navigationValue: 4,
+        magicalIntensity: 3
+    }
+];
+
+// Enhanced Season Categories for Non-Overlapping Logic
+const SEASON_CATEGORIES = {
+    eternal: {
+        name: "Eternal Constellations",
+        description: "Always visible regardless of season",
+        visibility: "always",
+        constellations: ["year-round"]
+    },
+    spring: {
+        name: "Spring Constellations", 
+        description: "Visible during spring months",
+        visibility: "spring-only",
+        constellations: ["spring"],
+        months: ["late-bloom", "high-spring"]
+    },
+    summer: {
+        name: "Summer Constellations",
+        description: "Visible during summer months", 
+        visibility: "summer-only",
+        constellations: ["summer"],
+        months: ["late-summer", "mid-summer"]
+    },
+    autumn: {
+        name: "Autumn Constellations",
+        description: "Visible during autumn months",
+        visibility: "autumn-only", 
+        constellations: ["autumn"],
+        months: ["mid-autumn", "late-autumn"]
+    },
+    winter: {
+        name: "Winter Constellations",
+        description: "Visible during winter months",
+        visibility: "winter-only",
+        constellations: ["winter"], 
+        months: ["winter", "deep-winter"]
+    },
+    special: {
+        name: "Special Event Constellations",
+        description: "Visible only during specific celestial events",
+        visibility: "event-only",
+        constellations: ["equinox", "solstice", "eclipse", "seasonal-transition"]
+    }
+};
+
+// Enhanced Seasonal Mapping
+const ENHANCED_SEASON_MAP = {
+    'all': ['year-round', 'spring', 'summer', 'autumn', 'winter', 'equinox', 'solstice', 'eclipse', 'seasonal-transition'],
+    'late-bloom': ['year-round', 'spring'],
+    'high-spring': ['year-round', 'spring', 'equinox'],
+    'mid-summer': ['year-round', 'summer'],
+    'late-summer': ['year-round', 'summer', 'solstice'],
+    'mid-autumn': ['year-round', 'autumn', 'equinox'], 
+    'late-autumn': ['year-round', 'autumn'],
+    'winter': ['year-round', 'winter', 'solstice'],
+    'deep-winter': ['year-round', 'winter'],
+    'equinox': ['year-round', 'equinox'], // Special filter for equinox-only viewing
+    'solstice': ['year-round', 'solstice'], // Special filter for solstice-only viewing
+    'eclipse': ['year-round', 'eclipse'] // Special filter for eclipse events
+};
+
+// Emotional trigger categories with enhanced descriptions
+const ENHANCED_EMOTIONAL_TRIGGERS = {
+    MOURNING: {
+        key: "mourning",
+        name: "Mourning",
+        description: "Grief, loss, remembrance of the departed",
+        color: "59, 130, 246", // Blue
+        intensity: "deep"
+    },
+    REVELATION: {
+        key: "revelation", 
+        name: "Revelation",
+        description: "Truth unveiled, secrets revealed, sudden understanding",
+        color: "251, 191, 36", // Gold
+        intensity: "bright"
+    },
+    BARGAIN: {
+        key: "bargain",
+        name: "Bargain", 
+        description: "Deals struck, fate negotiations, binding agreements",
+        color: "34, 197, 94", // Green
+        intensity: "steady"
+    },
+    BETRAYAL: {
+        key: "betrayal",
+        name: "Betrayal",
+        description: "Broken trust, hidden malice, false friendship",
+        color: "239, 68, 68", // Red  
+        intensity: "harsh"
+    }
+};
+
+// State persistence utilities
+const StarMapState = {
+    save: function(state) {
+        const stateData = {
+            viewState: state.viewState,
+            filters: state.filters,
+            displayOptions: state.displayOptions,
+            timestamp: Date.now()
+        };
+        sessionStorage.setItem('starmap_state', JSON.stringify(stateData));
+    },
+    
+    load: function() {
+        try {
+            const saved = sessionStorage.getItem('starmap_state');
+            if (saved) {
+                const data = JSON.parse(saved);
+                // Only load if saved within last hour to prevent stale state
+                if (Date.now() - data.timestamp < 3600000) {
+                    return data;
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to load saved state:', e);
+        }
+        return null;
+    },
+    
+    clear: function() {
+        sessionStorage.removeItem('starmap_state');
+    }
+};
+
+// Enhanced constellation filtering logic
+const ConstellationFilter = {
+    bySeasonEnhanced: function(constellations, selectedSeason) {
+        const validSeasons = ENHANCED_SEASON_MAP[selectedSeason] || [selectedSeason];
+        
+        return constellations.filter(constellation => {
+            // Year-round constellations always show
+            if (constellation.season === 'year-round') {
+                return true;
+            }
+            
+            // Check if constellation's season matches any valid season
+            return validSeasons.includes(constellation.season);
+        });
+    },
+    
+    byEmotionalTriggers: function(constellations, activeEmotions) {
+        if (activeEmotions.length === 0) {
+            return constellations; // Show all if no emotional filters active
+        }
+        
+        return constellations.filter(constellation => {
+            // Always show constellations with no triggers
+            if (constellation.emotionalTriggers.length === 0) {
+                return true;
+            }
+            
+            // Show if any trigger matches active emotions
+            return constellation.emotionalTriggers.some(trigger => 
+                activeEmotions.includes(trigger.toLowerCase())
+            );
+        });
+    },
+    
+    byTimeOfNight: function(constellations, hour) {
+        // Enhanced time visibility with seasonal considerations
+        return constellations.filter(constellation => {
+            // Special timing for special constellations
+            switch (constellation.season) {
+                case 'eclipse':
+                    return hour >= 0 && hour <= 24; // Always visible during eclipse events
+                case 'equinox':
+                    return hour >= 6 && hour <= 18; // Daylight hours during equinox
+                case 'solstice':
+                    return (hour >= 22 || hour <= 4); // Deep night during solstice
+                default:
+                    return true; // Most constellations follow normal patterns
+            }
+        });
+    }
+};
+
+// Export for use in web application
+if (typeof window !== 'undefined') {
+    window.EnhancedConstellationData = { 
+        CONSTELLATIONS: ENHANCED_CONSTELLATIONS,
+        SEASON_CATEGORIES,
+        SEASON_MAP: ENHANCED_SEASON_MAP,
+        EMOTIONAL_TRIGGERS: ENHANCED_EMOTIONAL_TRIGGERS,
+        StarMapState,
+        ConstellationFilter
+    };
+}

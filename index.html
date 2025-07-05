@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Enhanced Hermit's Star Map - Interactive Feywild constellation guide with state persistence">
+    <title>Enhanced Hermit's Star Map - Feywild Constellations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body class="bg-gradient-to-b from-indigo-900 via-purple-900 to-black min-h-screen text-white overflow-hidden">
+    <!-- Main Application Container -->
+    <div id="app" class="relative w-full h-screen flex">
+        
+        <!-- Enhanced Left Control Panel -->
+        <aside id="control-panel" class="w-80 bg-black bg-opacity-50 backdrop-blur-sm border-r border-purple-500 border-opacity-30 p-6 overflow-y-auto z-20">
+            <!-- Header with Version Info -->
+            <header class="mb-8">
+                <h1 class="text-2xl font-bold text-purple-200 mb-2">Enhanced Hermit's Star Map</h1>
+                <p class="text-sm text-purple-300 opacity-80">Navigate the Feywild by starlight and emotion</p>
+                <div class="text-xs text-purple-400 mt-1">v2.0 - Enhanced Edition</div>
+            </header>
+
+            <!-- Session State Indicator -->
+            <section class="mb-6" aria-labelledby="session-info">
+                <div id="session-info" class="flex items-center text-xs text-purple-400">
+                    <span id="save-indicator" class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                    <span>Session state saved</span>
+                    <button id="clear-state" class="ml-auto text-purple-300 hover:text-white text-xs underline">Reset</button>
+                </div>
+            </section>
+
+            <!-- Enhanced Emotional Resonance Filters -->
+            <section class="mb-8" aria-labelledby="emotional-filters-title">
+                <h2 id="emotional-filters-title" class="text-lg font-semibold text-purple-200 mb-4 flex items-center">
+                    <span class="w-6 h-6 mr-2 bg-purple-600 rounded-full flex items-center justify-center text-xs">✦</span>
+                    Emotional Resonance
+                </h2>
+                <div class="space-y-3">
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="checkbox" id="filter-mourning" name="emotional-filter" value="mourning" class="sr-only peer">
+                        <div class="w-5 h-5 border-2 border-gray-400 rounded peer-checked:bg-blue-600 peer-checked:border-blue-600 flex items-center justify-center transition-all duration-200 group-hover:border-blue-400">
+                            <span class="text-white text-xs opacity-0 peer-checked:opacity-100">✓</span>
+                        </div>
+                        <span class="ml-3 text-blue-200 group-hover:text-blue-100 transition-colors">Mourning</span>
+                        <span class="ml-auto text-xs text-blue-300 opacity-70">Grief & Loss</span>
+                    </label>
+                    
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="checkbox" id="filter-revelation" name="emotional-filter" value="revelation" class="sr-only peer">
+                        <div class="w-5 h-5 border-2 border-gray-400 rounded peer-checked:bg-yellow-600 peer-checked:border-yellow-600 flex items-center justify-center transition-all duration-200 group-hover:border-yellow-400">
+                            <span class="text-white text-xs opacity-0 peer-checked:opacity-100">✓</span>
+                        </div>
+                        <span class="ml-3 text-yellow-200 group-hover:text-yellow-100 transition-colors">Revelation</span>
+                        <span class="ml-auto text-xs text-yellow-300 opacity-70">Truth Unveiled</span>
+                    </label>
+                    
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="checkbox" id="filter-bargain" name="emotional-filter" value="bargain" class="sr-only peer">
+                        <div class="w-5 h-5 border-2 border-gray-400 rounded peer-checked:bg-green-600 peer-checked:border-green-600 flex items-center justify-center transition-all duration-200 group-hover:border-green-400">
+                            <span class="text-white text-xs opacity-0 peer-checked:opacity-100">✓</span>
+                        </div>
+                        <span class="ml-3 text-green-200 group-hover:text-green-100 transition-colors">Bargain</span>
+                        <span class="ml-auto text-xs text-green-300 opacity-70">Deals & Fate</span>
+                    </label>
+                    
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="checkbox" id="filter-betrayal" name="emotional-filter" value="betrayal" class="sr-only peer">
+                        <div class="w-5 h-5 border-2 border-gray-400 rounded peer-checked:bg-red-600 peer-checked:border-red-600 flex items-center justify-center transition-all duration-200 group-hover:border-red-400">
+                            <span class="text-white text-xs opacity-0 peer-checked:opacity-100">✓</span>
+                        </div>
+                        <span class="ml-3 text-red-200 group-hover:text-red-100 transition-colors">Betrayal</span>
+                        <span class="ml-auto text-xs text-red-300 opacity-70">Broken Trust</span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Enhanced Season and Time Controls -->
+            <section class="mb-8" aria-labelledby="time-season-title">
+                <h2 id="time-season-title" class="text-lg font-semibold text-purple-200 mb-4 flex items-center">
+                    <span class="w-6 h-6 mr-2 bg-purple-600 rounded-full flex items-center justify-center text-xs">⟐</span>
+                    Temporal Alignment
+                </h2>
+                
+                <!-- Enhanced Season Selector -->
+                <div class="mb-4">
+                    <label for="season-select" class="block text-sm text-purple-300 mb-2">Season & Events</label>
+                    <select id="season-select" class="w-full bg-gray-800 border border-purple-500 border-opacity-30 rounded px-3 py-2 text-white focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400">
+                        <!-- Options populated by JavaScript -->
+                    </select>
+                    <div class="text-xs text-purple-400 mt-1">
+                        🌟 = Special celestial events
+                    </div>
+                </div>
+
+                <!-- Enhanced Time of Night -->
+                <div class="mb-4">
+                    <label for="time-slider" class="block text-sm text-purple-300 mb-2">Time of Night</label>
+                    <input type="range" id="time-slider" min="0" max="24" value="21" step="0.5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider">
+                    <div class="flex justify-between text-xs text-purple-400 mt-1">
+                        <span>Dusk</span>
+                        <span id="time-display">9:00 PM</span>
+                        <span>Dawn</span>
+                    </div>
+                </div>
+
+                <!-- Special Events Toggle -->
+                <div class="mb-4">
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="checkbox" id="show-special-events" checked class="sr-only peer">
+                        <div class="w-5 h-5 border-2 border-gray-400 rounded peer-checked:bg-purple-600 peer-checked:border-purple-600 flex items-center justify-center transition-all duration-200 group-hover:border-purple-400">
+                            <span class="text-white text-xs opacity-0 peer-checked:opacity-100">✓</span>
+                        </div>
+                        <span class="ml-3 text-purple-200 group-hover:text-purple-100 transition-colors">Show Special Events</span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Enhanced Navigation Controls -->
+            <section class="mb-8" aria-labelledby="navigation-title">
+                <h2 id="navigation-title" class="text-lg font-semibold text-purple-200 mb-4 flex items-center">
+                    <span class="w-6 h-6 mr-2 bg-purple-600 rounded-full flex items-center justify-center text-xs">⊕</span>
+                    Star Map Navigation
+                </h2>
+                
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <button id="zoom-in" class="bg-purple-700 hover:bg-purple-600 px-3 py-2 rounded text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400" aria-label="Zoom in">
+                        Zoom In
+                    </button>
+                    <button id="zoom-out" class="bg-purple-700 hover:bg-purple-600 px-3 py-2 rounded text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400" aria-label="Zoom out">
+                        Zoom Out
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-2 mb-4">
+                    <button id="pan-nw" class="bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-xs transition-colors" aria-label="Pan northwest">↖</button>
+                    <button id="pan-n" class="bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-xs transition-colors" aria-label="Pan north">↑</button>
+                    <button id="pan-ne" class="bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-xs transition-colors" aria-label="Pan northeast">↗</button>
+                    <button id="pan-w" class="bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-xs transition-colors" aria-label="Pan west">←</button>
+                    <button id="center-view" class="bg-purple-700 hover:bg-purple-600 px-2 py-1 rounded text-xs transition-colors" aria-label="Center view">⊙</button>
+                    <button id="pan-e" class="bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-xs transition-colors" aria-label="Pan east">→</button>
+                    <button id="pan-sw" class="bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-xs transition-colors" aria-label="Pan southwest">↙</button>
+                    <button id="pan-s" class="bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-xs transition-colors" aria-label="Pan south">↓</button>
+                    <button id="pan-se" class="bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-xs transition-colors" aria-label="Pan southeast">↘</button>
+                </div>
+
+                <button id="reset-view" class="w-full bg-indigo-700 hover:bg-indigo-600 px-3 py-2 rounded text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                    Reset View
+                </button>
+                
+                <!-- Enhanced Keyboard Shortcuts Info -->
+                <div class="mt-3 text-xs text-purple-400">
+                    <div class="font-semibold mb-1">Keyboard Shortcuts:</div>
+                    <div>• Ctrl/Cmd + H: Help</div>
+                    <div>• Ctrl/Cmd + R: Reset View</div>
+                    <div>• Esc: Close panels</div>
+                </div>
+            </section>
+
+            <!-- Enhanced Display Options -->
+            <section class="mb-8" aria-labelledby="display-options-title">
+                <h2 id="display-options-title" class="text-lg font-semibold text-purple-200 mb-4 flex items-center">
+                    <span class="w-6 h-6 mr-2 bg-purple-600 rounded-full flex items-center justify-center text-xs">👁</span>
+                    Display Options
+                </h2>
+                
+                <div class="space-y-2">
+                    <button id="toggle-constellation-names" class="w-full bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-sm transition-colors text-left" aria-pressed="true">
+                        Hide Names
+                    </button>
+                    <button id="toggle-constellation-lines" class="w-full bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-sm transition-colors text-left" aria-pressed="true">
+                        Hide Lines
+                    </button>
+                    <button id="toggle-grid" class="w-full bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-sm transition-colors text-left" aria-pressed="false">
+                        Show Grid
+                    </button>
+                </div>
+            </section>
+
+            <!-- Enhanced Constellation List with Categories -->
+            <section aria-labelledby="constellation-list-title">
+                <h2 id="constellation-list-title" class="text-lg font-semibold text-purple-200 mb-4 flex items-center">
+                    <span class="w-6 h-6 mr-2 bg-purple-600 rounded-full flex items-center justify-center text-xs">★</span>
+                    Visible Constellations
+                    <span id="constellation-count" class="ml-auto text-sm text-purple-400">0</span>
+                </h2>
+                
+                <!-- Constellation Stats -->
+                <div class="mb-4 p-3 bg-purple-900 bg-opacity-30 rounded border border-purple-500 border-opacity-20">
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="text-purple-300">
+                            <span class="block font-semibold">Legend:</span>
+                            <span class="text-purple-400">● Magical Intensity</span>
+                        </div>
+                        <div class="text-purple-300">
+                            <span class="block font-semibold">Navigation:</span>
+                            <span class="text-yellow-400">🧭 High Value</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="constellation-list" class="space-y-2 max-h-96 overflow-y-auto">
+                    <!-- Constellation list items populated by JavaScript -->
+                </div>
+            </section>
+        </aside>
+
+        <!-- Main Star Map Canvas -->
+        <main class="flex-1 relative">
+            <canvas id="star-map" class="w-full h-full cursor-move" aria-label="Interactive star map showing Feywild constellations" role="img">
+                Your browser does not support the HTML5 canvas element required for the star map.
+            </canvas>
+            
+            <!-- Enhanced Canvas Overlay Controls -->
+            <div class="absolute top-4 right-4 flex flex-col space-y-2 z-10">
+                <button id="toggle-constellation-names" class="bg-black bg-opacity-50 backdrop-blur-sm text-white px-3 py-2 rounded border border-purple-500 border-opacity-30 hover:bg-opacity-70 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400" aria-pressed="true">
+                    Show Names
+                </button>
+                <button id="toggle-constellation-lines" class="bg-black bg-opacity-50 backdrop-blur-sm text-white px-3 py-2 rounded border border-purple-500 border-opacity-30 hover:bg-opacity-70 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400" aria-pressed="true">
+                    Show Lines
+                </button>
+                <button id="toggle-grid" class="bg-black bg-opacity-50 backdrop-blur-sm text-white px-3 py-2 rounded border border-purple-500 border-opacity-30 hover:bg-opacity-70 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400" aria-pressed="false">
+                    Show Grid
+                </button>
+            </div>
+
+            <!-- Performance Indicator -->
+            <div class="absolute top-4 left-4 z-10">
+                <div id="performance-indicator" class="bg-black bg-opacity-50 backdrop-blur-sm text-white px-2 py-1 rounded text-xs border border-purple-500 border-opacity-30">
+                    <span id="fps-counter">FPS: --</span>
+                    <span class="ml-2" id="star-count">Stars: 1500</span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Enhanced Constellation Detail Panel -->
+        <div id="constellation-detail" class="absolute top-0 right-0 w-96 h-full bg-black bg-opacity-80 backdrop-blur-sm border-l border-purple-500 border-opacity-30 p-6 transform translate-x-full transition-transform duration-300 ease-in-out z-30 overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="detail-title" class="text-xl font-bold text-purple-200">Constellation Details</h2>
+                <button id="close-detail" class="text-purple-300 hover:text-white text-2xl focus:outline-none focus:ring-2 focus:ring-purple-400 rounded" aria-label="Close constellation details">
+                    ×
+                </button>
+            </div>
+            
+            <div id="detail-content" class="space-y-4">
+                <div id="detail-name" class="text-2xl font-semibold text-white"></div>
+                <div id="detail-alternate-name" class="text-lg text-purple-300 italic"></div>
+                <div id="detail-shape" class="text-purple-200"></div>
+                
+                <!-- Enhanced Properties Section -->
+                <div class="border-t border-purple-500 border-opacity-30 pt-4">
+                    <h3 class="text-lg font-semibold text-purple-200 mb-2">Properties</h3>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-purple-300 font-semibold">Season:</span>
+                            <div id="detail-season" class="text-purple-200"></div>
+                        </div>
+                        <div>
+                            <span class="text-purple-300 font-semibold">Direction:</span>
+                            <div id="detail-direction" class="text-purple-200"></div>
+                        </div>
+                        <div>
+                            <span class="text-purple-300 font-semibold">Magical Intensity:</span>
+                            <div id="detail-magical-intensity" class="text-purple-200"></div>
+                        </div>
+                        <div>
+                            <span class="text-purple-300 font-semibold">Navigation Value:</span>
+                            <div id="detail-navigation-value" class="text-purple-200"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="border-t border-purple-500 border-opacity-30 pt-4">
+                    <h3 class="text-lg font-semibold text-purple-200 mb-2">Symbolism</h3>
+                    <div id="detail-symbolism" class="text-purple-300"></div>
+                </div>
+                
+                <div id="detail-emotional-triggers" class="border-t border-purple-500 border-opacity-30 pt-4">
+                    <h3 class="text-lg font-semibold text-purple-200 mb-2">Emotional Resonance</h3>
+                    <div id="detail-triggers" class="flex flex-wrap gap-2"></div>
+                </div>
+                
+                <div id="detail-special-effects" class="border-t border-purple-500 border-opacity-30 pt-4">
+                    <h3 class="text-lg font-semibold text-purple-200 mb-2">Special Properties</h3>
+                    <div id="detail-effects" class="text-purple-300"></div>
+                </div>
+                
+                <div id="detail-navigation" class="border-t border-purple-500 border-opacity-30 pt-4">
+                    <h3 class="text-lg font-semibold text-purple-200 mb-2">Navigation Notes</h3>
+                    <div id="detail-nav-info" class="text-purple-300"></div>
+                </div>
+                
+                <div id="detail-mythic-resonance" class="border-t border-purple-500 border-opacity-30 pt-4">
+                    <h3 class="text-lg font-semibold text-purple-200 mb-2">Mythic Resonance</h3>
+                    <div id="detail-resonance" class="text-purple-300 capitalize"></div>
+                </div>
+
+                <!-- Enhanced Lore Section -->
+                <div class="border-t border-purple-500 border-opacity-30 pt-4">
+                    <h3 class="text-lg font-semibold text-purple-200 mb-2">Lore & Usage</h3>
+                    <div class="text-sm text-purple-300 space-y-2">
+                        <div id="detail-lore-usage"></div>
+                        <div class="text-xs text-purple-400 mt-3">
+                            Click and drag the star map to explore. Use emotional filters to discover hidden connections.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Loading Overlay -->
+        <div id="loading-overlay" class="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-400 mx-auto mb-4 star-pulse"></div>
+                <p class="text-purple-200 text-lg">Loading the enhanced stars...</p>
+                <p class="text-purple-300 text-sm mt-2">Initializing constellation database</p>
+            </div>
+        </div>
+
+        <!-- Enhanced Help Modal -->
+        <div id="help-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+            <div class="bg-gray-900 border border-purple-500 border-opacity-30 rounded-lg p-6 max-w-4xl max-h-96 overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-purple-200">Enhanced Hermit's Star Map Guide</h2>
+                    <button id="close-help" class="text-purple-300 hover:text-white text-2xl focus:outline-none focus:ring-2 focus:ring-purple-400 rounded" aria-label="Close help">
+                        ×
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-purple-300">
+                    <div>
+                        <h3 class="font-semibold text-purple-200 mb-2">🗺️ Navigation</h3>
+                        <p class="text-sm mb-2">Click and drag to pan around the sky. Use mouse wheel or zoom controls to zoom in and out.</p>
+                        
+                        <h3 class="font-semibold text-purple-200 mb-2 mt-4">✨ Emotional Resonance</h3>
+                        <p class="text-sm mb-2">Check emotional filters to highlight constellations that respond to specific states: Mourning (grief), Revelation (truth), Bargain (deals), and Betrayal (broken trust).</p>
+                        
+                        <h3 class="font-semibold text-purple-200 mb-2 mt-4">🗓️ Temporal Alignment</h3>
+                        <p class="text-sm mb-2">Adjust season and time of night to see how constellation visibility changes. Special events (🌟) appear only during celestial alignments.</p>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-purple-200 mb-2">📊 Enhanced Features</h3>
+                        <ul class="text-sm space-y-1">
+                            <li>• <strong>State Persistence:</strong> Your view and settings are automatically saved</li>
+                            <li>• <strong>Magical Intensity:</strong> ● indicators show constellation power levels</li>
+                            <li>• <strong>Navigation Value:</strong> 🧭 marks reliable wayfinding constellations</li>
+                            <li>• <strong>Seasonal Categories:</strong> Organized by eternal, seasonal, and special events</li>
+                            <li>• <strong>Enhanced Lore:</strong> Detailed information for each constellation</li>
+                        </ul>
+                        
+                        <h3 class="font-semibold text-purple-200 mb-2 mt-4">⌨️ Keyboard Shortcuts</h3>
+                        <ul class="text-sm space-y-1">
+                            <li>• <kbd class="bg-purple-800 px-1 rounded">Ctrl/Cmd + H</kbd> - Show this help</li>
+                            <li>• <kbd class="bg-purple-800 px-1 rounded">Ctrl/Cmd + R</kbd> - Reset view</li>
+                            <li>• <kbd class="bg-purple-800 px-1 rounded">Esc</kbd> - Close panels</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-6 p-4 bg-purple-900 bg-opacity-30 rounded border border-purple-500 border-opacity-20">
+                    <h3 class="font-semibold text-purple-200 mb-2">🎲 For Dungeon Masters</h3>
+                    <p class="text-sm text-purple-300">Use this tool to guide players through Feywild navigation, reveal constellation-based prophecies, and trigger emotional resonance events during your campaigns. Each constellation includes detailed lore and mechanical benefits for your game.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Help Button -->
+    <button id="help-button" class="fixed bottom-4 right-4 bg-purple-700 hover:bg-purple-600 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl focus:outline-none focus:ring-2 focus:ring-purple-400 z-20 mystical-pulse" aria-label="Show help">
+        ?
+    </button>
+
+    <!-- Enhanced Scripts -->
+    <script src="./data/enhanced_constellation_data.js"></script>
+    <script src="./js/enhanced_starmap.js"></script>
+    
+    <!-- Initialize Enhanced Application -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for enhanced data availability
+            if (typeof window.EnhancedConstellationData === 'undefined') {
+                console.warn('Enhanced constellation data not found, loading fallback...');
+                // Fallback to original data if enhanced version not available
+                const script = document.createElement('script');
+                script.src = './data/constellations.js';
+                document.head.appendChild(script);
+                
+                script.onload = () => {
+                    new StarMap(); // Use original StarMap as fallback
+                };
+            } else {
+                // Initialize enhanced version
+                new EnhancedStarMap();
+            }
+            
+            // Enhanced session state management
+            const clearStateButton = document.getElementById('clear-state');
+            if (clearStateButton) {
+                clearStateButton.addEventListener('click', () => {
+                    if (confirm('This will reset all your saved settings and view position. Continue?')) {
+                        if (window.EnhancedConstellationData?.StarMapState) {
+                            window.EnhancedConstellationData.StarMapState.clear();
+                        }
+                        location.reload();
+                    }
+                });
+            }
+            
+            // Enhanced keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                // Global shortcuts that work regardless of focus
+                if (e.key === 'F1') {
+                    e.preventDefault();
+                    document.getElementById('help-button').click();
+                }
+            });
+            
+            // Performance monitoring
+            let frameCount = 0;
+            let lastTime = performance.now();
+            
+            function updatePerformanceStats() {
+                frameCount++;
+                const currentTime = performance.now();
+                
+                if (currentTime - lastTime >= 1000) {
+                    const fps = Math.round(frameCount * 1000 / (currentTime - lastTime));
+                    const fpsCounter = document.getElementById('fps-counter');
+                    if (fpsCounter) {
+                        fpsCounter.textContent = `FPS: ${fps}`;
+                        // Color code based on performance
+                        if (fps >= 30) {
+                            fpsCounter.style.color = '#10b981'; // Green
+                        } else if (fps >= 15) {
+                            fpsCounter.style.color = '#f59e0b'; // Yellow
+                        } else {
+                            fpsCounter.style.color = '#ef4444'; // Red
+                        }
+                    }
+                    
+                    frameCount = 0;
+                    lastTime = currentTime;
+                }
+                
+                requestAnimationFrame(updatePerformanceStats);
+            }
+            
+            updatePerformanceStats();
+        });
+    </script>
+</body>
+</html>
