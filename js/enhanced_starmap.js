@@ -538,6 +538,7 @@ class EnhancedStarMap {
                 stellarClass: stellarClass,
                 color: this.getStellarColor(stellarClass)
             });
+            this.updateStarCount();
         }
     }
     
