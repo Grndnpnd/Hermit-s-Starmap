@@ -654,19 +654,22 @@ const ConstellationFilter = {
     
     // New method to determine visibility based on magical intensity
     getVisibilityByMagicalIntensity: function(constellation, hour) {
-        const intensity = constellation.magicalIntensity || 3;
-        
-        if (intensity >= 4) {
-            // High magical intensity - visible most of the night
-            return hour >= 19 || hour <= 6;
-        } else if (intensity >= 3) {
-            // Medium intensity - visible during dark hours
-            return hour >= 21 || hour <= 5;
-        } else {
-            // Low intensity - only visible during deepest night
-            return hour >= 22 || hour <= 4;
-        }
+    const intensity = constellation.magicalIntensity || 3;
+    
+    if (intensity >= 4) {
+        // High magical intensity - visible most of the time
+        return hour >= 17 || hour <= 8;
+    } else if (intensity >= 3) {
+        // Medium intensity - visible during evening/night/morning
+        return hour >= 18 || hour <= 7;
+    } else if (intensity >= 2) {
+        // Lower intensity - visible during darker hours
+        return hour >= 20 || hour <= 5;
+    } else {
+        // Very low intensity - visible during deepest night
+        return hour >= 22 || hour <= 3;
     }
+}
 };
 
 // Export for use in web application
