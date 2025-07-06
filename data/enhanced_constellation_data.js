@@ -31,7 +31,7 @@ const ENHANCED_CONSTELLATIONS = [
         seasonCategory: "eternal",
         symbolism: "Identity, deception, reflection, duality of truth",
         direction: "Variable",
-        coordinates: { x: 25, y: 25, direction: "variable", elevation: "high" },
+        coordinates: { x: 32, y: 25, direction: "variable", elevation: "high" },
         currentAlignment: "Shifts position based on observer's nature",
         emotionalTriggers: ["revelation"],
         visibility: "visible",
