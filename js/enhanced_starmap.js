@@ -512,7 +512,7 @@ class EnhancedStarMap {
     
     generateEnhancedStarField() {
         this.stars = [];
-        const numStars = this.performanceMode ? 1200 : 3500;
+        const numStars = this.performanceMode ? 2500 : 3500;
         
         for (let i = 0; i < numStars; i++) {
             const angle = Math.random() * Math.PI * 2;
