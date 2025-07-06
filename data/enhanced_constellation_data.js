@@ -658,7 +658,7 @@ const ConstellationFilter = {
     
     if (intensity >= 4) {
         // High magical intensity - visible most of the time
-        return hour >= 12 || hour <= 8;
+        return hour >= 12 || hour <= 10;
     } else if (intensity >= 3) {
         // Medium intensity - visible during evening/night/morning
         return hour >= 15 || hour <= 7;
