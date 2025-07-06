@@ -121,7 +121,7 @@ const ENHANCED_CONSTELLATIONS = [
     },
     {
         id: 7,
-        name: "The Swan (Upper)",
+        name: "The Snow Goose",
         alternateName: "Ascending Grace",
         shape: "A graceful swan in flight, wings spread wide",
         season: "spring",
@@ -305,7 +305,7 @@ const ENHANCED_CONSTELLATIONS = [
         seasonCategory: "winter",
         symbolism: "Rest, reflection, inner journey, preparation for rebirth",
         direction: "Southwest",
-        coordinates: { x: 30, y: 75, direction: "southwest", elevation: "low" },
+        coordinates: { x: 35, y: 75, direction: "southwest", elevation: "low" },
         currentAlignment: "Rests on winter waters before spring's return",
         emotionalTriggers: [],
         visibility: "visible",
