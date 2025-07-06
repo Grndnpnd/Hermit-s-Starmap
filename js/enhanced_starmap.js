@@ -575,11 +575,11 @@ class EnhancedStarMap {
         const random = Math.random();
         
         if (random < 0.6) {
-            return Math.pow(Math.random(), 0.4) * 400;
+            return Math.pow(Math.random(), 0.4) * 800;
         } else if (random < 0.9) {
-            return 400 + Math.pow(Math.random(), 0.3) * 300;
+            return 400 + Math.pow(Math.random(), 0.3) * 600;
         } else {
-            return 700 + Math.random() * 300;
+            return 1400 + Math.random() * 300;
         }
     }
     
