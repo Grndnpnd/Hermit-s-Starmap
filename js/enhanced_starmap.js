@@ -652,34 +652,42 @@ class EnhancedStarMap {
         return enhancedStars;
     }
     
-    generateConstellationStarPattern(constellation) {
-        // Generate basic star pattern - simplified for this version
-        const stars = [];
-        const numStars = 5 + Math.floor(Math.random() * 8);
+seededRandom(seed) {
+    const x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+}
+
+generateConstellationStarPattern(constellation) {
+    // Use constellation ID as seed for consistent patterns
+    const seed = constellation.id * 7.3; // Base seed
+    
+    const stars = [];
+    const numStars = 5 + Math.floor(this.seededRandom(seed) * 8);
+    
+    // Central bright star (always same position)
+    stars.push({ 
+        x: constellation.position.x, 
+        y: constellation.position.y, 
+        brightness: 0.95, 
+        size: 3.5 
+    });
+    
+    // Surrounding pattern with seeded random
+    for (let i = 1; i < numStars; i++) {
+        const seedI = seed + i * 2.7; // Unique seed per star
+        const angle = (i / (numStars - 1)) * Math.PI * 2 + this.seededRandom(seedI) * 0.5;
+        const distance = 20 + this.seededRandom(seedI + 1) * 30;
         
-        // Central bright star
-        stars.push({ 
-            x: constellation.position.x, 
-            y: constellation.position.y, 
-            brightness: 0.95, 
-            size: 3.5 
+        stars.push({
+            x: constellation.position.x + Math.cos(angle) * distance,
+            y: constellation.position.y + Math.sin(angle) * distance,
+            brightness: 0.7 + this.seededRandom(seedI + 2) * 0.3,
+            size: 2 + this.seededRandom(seedI + 3) * 2
         });
-        
-        // Surrounding pattern
-        for (let i = 1; i < numStars; i++) {
-            const angle = (i / (numStars - 1)) * Math.PI * 2 + Math.random() * 0.5;
-            const distance = 20 + Math.random() * 30;
-            
-            stars.push({
-                x: constellation.position.x + Math.cos(angle) * distance,
-                y: constellation.position.y + Math.sin(angle) * distance,
-                brightness: 0.7 + Math.random() * 0.3,
-                size: 2 + Math.random() * 2
-            });
-        }
-        
-        return stars;
     }
+    
+    return stars;
+}
     
     // Enhanced visibility and filtering logic with movement integration
     updateVisibleConstellations() {
