@@ -568,7 +568,7 @@ const ENHANCED_CONSTELLATIONS = [
         seasonCategory: "summer",
         symbolism: "Industry, cooperation, the sweetness of hard work",
         direction: "Southeast",
-        coordinates: { x: 65, y: 49, direction: "southeast", elevation: "mid" },
+        coordinates: { x: 65, y: 55, direction: "southeast", elevation: "mid" },
         currentAlignment: "Busiest during the height of summer productivity",
         emotionalTriggers: [],
         visibility: "visible",
