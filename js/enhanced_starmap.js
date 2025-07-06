@@ -853,8 +853,15 @@ generateConstellationStarPattern(constellation) {
         const countElement = document.getElementById('constellation-count');
         if (countElement) {
             countElement.textContent = this.visibleConstellations.length;
-        }
+     }
+}
+
+updateStarCount() {
+    const starCountElement = document.getElementById('star-count');
+    if (starCountElement) {
+        starCountElement.textContent = `Stars: ${this.stars.length}`;
     }
+}
     
     startAnimation() {
         let frameCount = 0;
