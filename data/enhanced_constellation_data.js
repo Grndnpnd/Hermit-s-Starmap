@@ -12,7 +12,7 @@ const ENHANCED_CONSTELLATIONS = [
         seasonCategory: "eternal",
         symbolism: "Guidance, destiny, protection on the road",
         direction: "Southeast",
-        coordinates: { x: 65, y: 75, direction: "southeast", elevation: "mid" },
+        coordinates: { x: 70, y: 75, direction: "southeast", elevation: "mid" },
         currentAlignment: "Points southeast—used by navigators toward distant realms",
         emotionalTriggers: [],
         visibility: "visible",
