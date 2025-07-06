@@ -392,7 +392,7 @@ const ENHANCED_CONSTELLATIONS = [
         navigationValue: 4,
         magicalIntensity: 3,
         movementType: "mystical"
-    }
+    },
     
 // Insert them before the closing bracket ];
 
