@@ -530,7 +530,7 @@ const ENHANCED_CONSTELLATIONS = [
         direction: "Southwest",
         coordinates: { x: 30, y: 65, direction: "southwest", elevation: "mid" },
         currentAlignment: "Dances across the summer sky during festivals",
-        emotionalTriggers: [],
+        emotionalTriggers: ["betrayal"],
         visibility: "visible",
         specialEffects: "Bells seem to jingle; appears upside-down to the overly serious",
         mythicResonance: "wisdom",
