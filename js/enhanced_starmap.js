@@ -978,27 +978,6 @@ generateFlowingStars(position, seed) {
     return stars;
 }
 
-generateCentaurStars(position, seed) {
-    const stars = [];
-    
-    // Horse body (4 legs, body, neck)
-    stars.push(
-        { x: position.x - 25, y: position.y + 20, brightness: 0.8, size: 2.5 }, // Back legs
-        { x: position.x - 15, y: position.y + 25, brightness: 0.7, size: 2 }, // Front legs
-        { x: position.x - 20, y: position.y + 10, brightness: 0.9, size: 3.5 }, // Body
-        { x: position.x - 8, y: position.y, brightness: 0.85, size: 3 } // Neck junction
-    );
-    
-    // Human torso and bow
-    stars.push(
-        { x: position.x + 5, y: position.y - 10, brightness: 0.9, size: 3 }, // Torso
-        { x: position.x + 8, y: position.y - 18, brightness: 0.8, size: 2.5 }, // Head
-        { x: position.x + 25, y: position.y - 15, brightness: 0.95, size: 3.5 }, // Arrow point (brightest)
-        { x: position.x + 18, y: position.y - 12, brightness: 0.7, size: 2 } // Bow
-    );
-    
-    return stars;
-}
 
 generateSpiderWebStars(position, seed) {
     const stars = [];
