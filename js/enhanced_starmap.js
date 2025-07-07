@@ -659,33 +659,209 @@ seededRandom(seed) {
 }
 
 generateConstellationStarPattern(constellation) {
-    // Use constellation ID as seed for consistent patterns
-    const seed = constellation.id * 3.14; // Base seed
+    // Use constellation ID as base seed but add variety
+    const baseSeed = constellation.id * 7.3;
     
+    // Different pattern types based on constellation theme
+    switch (constellation.name) {
+        case "The Lantern Bearer":
+        case "Hope's Light":
+            return this.generateLanternBearerStars(constellation.position);
+            
+        case "The Centaur":
+        case "Guided Arrow":
+            return this.generateCentaurStars(constellation.position, baseSeed);
+            
+        case "The Spider":
+        case "The Great Weaver":
+            return this.generateSpiderWebStars(constellation.position, baseSeed);
+            
+        case "The Swan (Upper)":
+        case "Ascending Grace":
+        case "The Swan (Lower)":
+        case "Resting Grace":
+            return this.generateSwanStars(constellation.position, baseSeed);
+            
+        case "The Shattered Path":
+        case "Broken Road":
+            return this.generateShatteredStars(constellation.position, baseSeed);
+            
+        case "The Driftcloak":
+        case "Wanderer's Mantle":
+            return this.generateFlowingStars(constellation.position, baseSeed);
+            
+        default:
+            return this.generateVariedStars(constellation.position, baseSeed, constellation);
+    }
+}
+
+// More organic star generation with controlled randomness
+generateVariedStars(position, seed, constellation) {
     const stars = [];
-    const numStars = 5 + Math.floor(this.seededRandom(seed) * 8);
     
-    // Central bright star (always same position)
+    // Vary number of stars based on magical intensity
+    const baseStars = 4 + (constellation.magicalIntensity || 3);
+    const numStars = baseStars + Math.floor(this.seededRandom(seed) * 6);
+    
+    // Central bright star
     stars.push({ 
-        x: constellation.position.x, 
-        y: constellation.position.y, 
-        brightness: 0.95, 
-        size: 3.5 
+        x: position.x, 
+        y: position.y, 
+        brightness: 0.9 + this.seededRandom(seed + 0.1) * 0.1, 
+        size: 3 + this.seededRandom(seed + 0.2) * 1.5 
     });
     
-    // Surrounding pattern with seeded random
+    // Create different patterns based on season
+    const patternType = constellation.season;
+    
     for (let i = 1; i < numStars; i++) {
-        const seedI = seed + i * 2.7; // Unique seed per star
-        const angle = (i / (numStars - 1)) * Math.PI * 2 + this.seededRandom(seedI) * 0.5;
-        const distance = 20 + this.seededRandom(seedI + 1) * 30;
+        const starSeed = seed + i * 2.7;
+        let angle, distance, brightness, size;
+        
+        switch (patternType) {
+            case 'spring':
+                // More organic, flowing patterns
+                angle = (i / numStars) * Math.PI * 2 + this.seededRandom(starSeed) * 1.2;
+                distance = 15 + this.seededRandom(starSeed + 1) * 25 + Math.sin(i * 0.8) * 8;
+                break;
+                
+            case 'summer':
+                // Radiating, energetic patterns
+                angle = (i / numStars) * Math.PI * 2 + this.seededRandom(starSeed) * 0.8;
+                distance = 20 + this.seededRandom(starSeed + 1) * 30;
+                break;
+                
+            case 'autumn':
+                // Clustered, grounded patterns
+                const clusterAngle = Math.floor(i / 2) * (Math.PI / 2);
+                angle = clusterAngle + this.seededRandom(starSeed) * 0.6;
+                distance = 12 + this.seededRandom(starSeed + 1) * 18;
+                break;
+                
+            case 'winter':
+                // Angular, crystalline patterns
+                angle = (i / numStars) * Math.PI * 2 + (this.seededRandom(starSeed) - 0.5) * 0.4;
+                distance = 18 + this.seededRandom(starSeed + 1) * 22;
+                break;
+                
+            default: // year-round and special
+                // Mixed patterns
+                angle = (i / numStars) * Math.PI * 2 + this.seededRandom(starSeed) * 0.7;
+                distance = 16 + this.seededRandom(starSeed + 1) * 28;
+        }
+        
+        // Vary brightness and size more naturally
+        brightness = 0.5 + this.seededRandom(starSeed + 2) * 0.4;
+        size = 1.5 + this.seededRandom(starSeed + 3) * 2;
+        
+        // Add some outlier stars for organic feel
+        if (this.seededRandom(starSeed + 4) > 0.85) {
+            distance *= 1.8; // Some stars further out
+            brightness *= 0.7; // Dimmer
+        }
         
         stars.push({
-            x: constellation.position.x + Math.cos(angle) * distance,
-            y: constellation.position.y + Math.sin(angle) * distance,
-            brightness: 0.7 + this.seededRandom(seedI + 2) * 0.3,
-            size: 2 + this.seededRandom(seedI + 3) * 2
+            x: position.x + Math.cos(angle) * distance,
+            y: position.y + Math.sin(angle) * distance,
+            brightness: brightness,
+            size: size
         });
     }
+    
+    return stars;
+}
+
+// Specific pattern generators for more character
+generateCentaurStars(position, seed) {
+    const stars = [];
+    
+    // Horse body (4 legs, body, neck)
+    stars.push(
+        { x: position.x - 25, y: position.y + 20, brightness: 0.8, size: 2.5 }, // Back legs
+        { x: position.x - 15, y: position.y + 25, brightness: 0.7, size: 2 }, // Front legs
+        { x: position.x - 20, y: position.y + 10, brightness: 0.9, size: 3.5 }, // Body
+        { x: position.x - 8, y: position.y, brightness: 0.85, size: 3 } // Neck junction
+    );
+    
+    // Human torso and bow
+    stars.push(
+        { x: position.x + 5, y: position.y - 10, brightness: 0.9, size: 3 }, // Torso
+        { x: position.x + 8, y: position.y - 18, brightness: 0.8, size: 2.5 }, // Head
+        { x: position.x + 25, y: position.y - 15, brightness: 0.95, size: 3.5 }, // Arrow point (brightest)
+        { x: position.x + 18, y: position.y - 12, brightness: 0.7, size: 2 } // Bow
+    );
+    
+    return stars;
+}
+
+generateSpiderWebStars(position, seed) {
+    const stars = [];
+    
+    // Spider body
+    stars.push({ x: position.x, y: position.y, brightness: 0.95, size: 4 });
+    
+    // 8 legs in spider formation
+    for (let leg = 0; leg < 8; leg++) {
+        const baseAngle = (leg / 8) * Math.PI * 2;
+        
+        // Each leg has 3 segments
+        for (let segment = 1; segment <= 3; segment++) {
+            const angle = baseAngle + (segment - 2) * 0.15; // Leg curves
+            const distance = segment * 12;
+            
+            stars.push({
+                x: position.x + Math.cos(angle) * distance,
+                y: position.y + Math.sin(angle) * distance,
+                brightness: 0.8 - segment * 0.1,
+                size: 3 - segment * 0.4
+            });
+        }
+    }
+    
+    // Web anchor points
+    const webPoints = [0, Math.PI * 2/3, Math.PI * 4/3];
+    webPoints.forEach(angle => {
+        stars.push({
+            x: position.x + Math.cos(angle) * 35,
+            y: position.y + Math.sin(angle) * 35,
+            brightness: 0.6,
+            size: 2
+        });
+    });
+    
+    return stars;
+}
+
+generateShatteredStars(position, seed) {
+    const stars = [];
+    
+    // Broken trail with deliberate gaps
+    const segments = [
+        { start: -40, end: -20, gap: true },
+        { start: -10, end: 5, gap: false },
+        { start: 15, gap: true },
+        { start: 25, end: 45, gap: false }
+    ];
+    
+    segments.forEach((segment, segIndex) => {
+        if (!segment.gap) {
+            const segmentLength = segment.end - segment.start;
+            const numStars = 2 + Math.floor(this.seededRandom(seed + segIndex) * 4);
+            
+            for (let i = 0; i < numStars; i++) {
+                const progress = i / (numStars - 1);
+                const x = position.x + segment.start + progress * segmentLength;
+                const y = position.y + (this.seededRandom(seed + segIndex + i) - 0.5) * 25;
+                
+                stars.push({
+                    x: x,
+                    y: y,
+                    brightness: 0.4 + this.seededRandom(seed + segIndex + i + 10) * 0.5,
+                    size: 1.5 + this.seededRandom(seed + segIndex + i + 20) * 2
+                });
+            }
+        }
+    });
     
     return stars;
 }
