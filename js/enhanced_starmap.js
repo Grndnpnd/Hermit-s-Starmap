@@ -775,54 +775,59 @@ generateVariedStars(position, seed, constellation) {
 generateCentaurStars(position, seed) {
     const stars = [];
     
-    // HORSE BODY (lower half) - horizontal horse shape
+    // HORSE BODY (lower half) - much more spread out
     stars.push(
-        // Horse legs (4 distinct legs)
-        { x: position.x - 25, y: position.y + 20, brightness: 0.7, size: 2 }, // Back left leg
-        { x: position.x - 20, y: position.y + 20, brightness: 0.7, size: 2 }, // Back right leg
-        { x: position.x - 10, y: position.y + 20, brightness: 0.7, size: 2 }, // Front left leg
-        { x: position.x - 5, y: position.y + 20, brightness: 0.7, size: 2 }, // Front right leg
+        // Horse legs (spread wider apart)
+        { x: position.x - 35, y: position.y + 30, brightness: 0.7, size: 2.2 }, // Back left leg
+        { x: position.x - 25, y: position.y + 30, brightness: 0.7, size: 2.2 }, // Back right leg
+        { x: position.x - 10, y: position.y + 30, brightness: 0.7, size: 2.2 }, // Front left leg
+        { x: position.x, y: position.y + 30, brightness: 0.7, size: 2.2 }, // Front right leg
         
-        // Horse body outline (rectangular-ish shape)
-        { x: position.x - 25, y: position.y + 10, brightness: 0.85, size: 3 }, // Hindquarters
-        { x: position.x - 15, y: position.y + 8, brightness: 0.9, size: 3.5 }, // Main body (brightest)
-        { x: position.x - 5, y: position.y + 10, brightness: 0.85, size: 3 }, // Chest/shoulders
+        // Horse body outline (much larger rectangular shape)
+        { x: position.x - 35, y: position.y + 15, brightness: 0.85, size: 3.2 }, // Hindquarters
+        { x: position.x - 20, y: position.y + 12, brightness: 0.9, size: 3.8 }, // Main body (brightest)
+        { x: position.x - 5, y: position.y + 15, brightness: 0.85, size: 3.2 }, // Chest/shoulders
         
-        // Horse neck (connecting to human)
-        { x: position.x + 2, y: position.y + 5, brightness: 0.8, size: 2.5 },
+        // Horse neck (longer connection to human)
+        { x: position.x + 5, y: position.y + 8, brightness: 0.8, size: 2.8 },
+        { x: position.x + 8, y: position.y + 2, brightness: 0.8, size: 2.5 },
         
-        // Tail
-        { x: position.x - 30, y: position.y + 8, brightness: 0.6, size: 1.8 }
+        // Tail (further back)
+        { x: position.x - 45, y: position.y + 12, brightness: 0.6, size: 1.8 },
+        { x: position.x - 50, y: position.y + 8, brightness: 0.5, size: 1.5 } // Tail tip
     );
     
-    // HUMAN TORSO (upper half) - vertical human shape
+    // HUMAN TORSO (upper half) - taller and more defined
     stars.push(
         // Human waist (connection point)
-        { x: position.x + 5, y: position.y, brightness: 0.9, size: 3.2 },
+        { x: position.x + 10, y: position.y - 5, brightness: 0.9, size: 3.2 },
         
-        // Human torso and shoulders
-        { x: position.x + 5, y: position.y - 8, brightness: 0.9, size: 3 }, // Chest
-        { x: position.x + 2, y: position.y - 12, brightness: 0.8, size: 2.5 }, // Left shoulder
-        { x: position.x + 8, y: position.y - 12, brightness: 0.8, size: 2.5 }, // Right shoulder
+        // Human torso (taller)
+        { x: position.x + 10, y: position.y - 15, brightness: 0.9, size: 3.5 }, // Chest
+        { x: position.x + 5, y: position.y - 20, brightness: 0.8, size: 2.8 }, // Left shoulder
+        { x: position.x + 15, y: position.y - 20, brightness: 0.8, size: 2.8 }, // Right shoulder
         
-        // Head
-        { x: position.x + 5, y: position.y - 18, brightness: 0.85, size: 2.8 },
+        // Head (higher up)
+        { x: position.x + 10, y: position.y - 30, brightness: 0.85, size: 3 },
         
-        // ARCHERY POSE - pointing southeast
-        // Left arm (holding bow)
-        { x: position.x - 2, y: position.y - 10, brightness: 0.75, size: 2.2 },
+        // ARCHERY POSE - much more extended southeast arrow
+        // Left arm (holding bow - extended)
+        { x: position.x - 5, y: position.y - 18, brightness: 0.75, size: 2.5 }, // Left elbow
+        { x: position.x - 12, y: position.y - 15, brightness: 0.7, size: 2.2 }, // Left hand/bow grip
         
-        // Right arm (drawing bowstring)
-        { x: position.x + 12, y: position.y - 10, brightness: 0.75, size: 2.2 },
+        // Right arm (drawing bowstring - pulled back)
+        { x: position.x + 20, y: position.y - 18, brightness: 0.75, size: 2.5 }, // Right elbow
+        { x: position.x + 28, y: position.y - 15, brightness: 0.7, size: 2.2 }, // Right hand (draw)
         
-        // Bow (vertical line on left side)
-        { x: position.x - 4, y: position.y - 8, brightness: 0.65, size: 1.8 },
-        { x: position.x - 4, y: position.y - 12, brightness: 0.65, size: 1.8 },
+        // Bow (vertical on left side, larger)
+        { x: position.x - 14, y: position.y - 12, brightness: 0.65, size: 2 }, // Bow top
+        { x: position.x - 14, y: position.y - 18, brightness: 0.65, size: 2 }, // Bow bottom
         
-        // Arrow (pointing southeast - the navigation element)
-        { x: position.x + 15, y: position.y - 8, brightness: 0.8, size: 2.5 }, // Arrow shaft
-        { x: position.x + 25, y: position.y - 2, brightness: 0.95, size: 3.8 }, // Arrow tip (brightest for navigation)
-        { x: position.x + 10, y: position.y - 12, brightness: 0.7, size: 2 }  // Fletching
+        // Arrow (pointing southeast - much longer for navigation)
+        { x: position.x + 25, y: position.y - 12, brightness: 0.8, size: 2.8 }, // Arrow shaft start
+        { x: position.x + 40, y: position.y - 5, brightness: 0.85, size: 3 }, // Arrow shaft mid
+        { x: position.x + 55, y: position.y + 2, brightness: 0.95, size: 4 }, // Arrow tip (brightest - navigation star)
+        { x: position.x + 15, y: position.y - 20, brightness: 0.7, size: 2.2 }  // Fletching
     );
     
     return stars;
