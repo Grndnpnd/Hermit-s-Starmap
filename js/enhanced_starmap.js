@@ -410,7 +410,7 @@ class EnhancedStarMap {
         }
         
         // Calculate random component
-        const constellationSeed = constellation.id * 1.68;
+        const constellationSeed = constellation.id * 7.68;
         const timeBasedSeed = timeOfNight * 0.1;
         const randomOffset = Math.sin(constellationSeed + timeBasedSeed) * profile.randomFactor;
         
@@ -660,7 +660,7 @@ seededRandom(seed) {
 
 generateConstellationStarPattern(constellation) {
     // Use constellation ID as seed for consistent patterns
-    const seed = constellation.id * 1.68; // Base seed
+    const seed = constellation.id * 3.14; // Base seed
     
     const stars = [];
     const numStars = 5 + Math.floor(this.seededRandom(seed) * 8);
