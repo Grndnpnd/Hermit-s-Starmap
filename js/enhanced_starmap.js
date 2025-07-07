@@ -775,53 +775,58 @@ generateVariedStars(position, seed, constellation) {
 generateCentaurStars(position, seed) {
     const stars = [];
     
-    // Horse body - more detailed horse shape
+    // HORSE BODY (lower half) - horizontal horse shape
     stars.push(
-        // Back legs (two separate legs)
-        { x: position.x - 30, y: position.y + 25, brightness: 0.75, size: 2.2 }, // Back left leg
-        { x: position.x - 25, y: position.y + 25, brightness: 0.75, size: 2.2 }, // Back right leg
+        // Horse legs (4 distinct legs)
+        { x: position.x - 25, y: position.y + 20, brightness: 0.7, size: 2 }, // Back left leg
+        { x: position.x - 20, y: position.y + 20, brightness: 0.7, size: 2 }, // Back right leg
+        { x: position.x - 10, y: position.y + 20, brightness: 0.7, size: 2 }, // Front left leg
+        { x: position.x - 5, y: position.y + 20, brightness: 0.7, size: 2 }, // Front right leg
         
-        // Front legs (two separate legs)  
-        { x: position.x - 15, y: position.y + 25, brightness: 0.75, size: 2.2 }, // Front left leg
-        { x: position.x - 10, y: position.y + 25, brightness: 0.75, size: 2.2 }, // Front right leg
+        // Horse body outline (rectangular-ish shape)
+        { x: position.x - 25, y: position.y + 10, brightness: 0.85, size: 3 }, // Hindquarters
+        { x: position.x - 15, y: position.y + 8, brightness: 0.9, size: 3.5 }, // Main body (brightest)
+        { x: position.x - 5, y: position.y + 10, brightness: 0.85, size: 3 }, // Chest/shoulders
         
-        // Horse body and back
-        { x: position.x - 28, y: position.y + 15, brightness: 0.85, size: 3 }, // Hindquarters
-        { x: position.x - 22, y: position.y + 8, brightness: 0.9, size: 3.5 }, // Main body
-        { x: position.x - 15, y: position.y + 12, brightness: 0.85, size: 3 }, // Chest
-        
-        // Horse neck and head
-        { x: position.x - 8, y: position.y + 5, brightness: 0.8, size: 2.8 }, // Neck
-        { x: position.x - 5, y: position.y - 2, brightness: 0.75, size: 2.5 }, // Horse head
+        // Horse neck (connecting to human)
+        { x: position.x + 2, y: position.y + 5, brightness: 0.8, size: 2.5 },
         
         // Tail
-        { x: position.x - 35, y: position.y + 10, brightness: 0.6, size: 1.8 }
+        { x: position.x - 30, y: position.y + 8, brightness: 0.6, size: 1.8 }
     );
     
-    // Human torso - more detailed human upper body
+    // HUMAN TORSO (upper half) - vertical human shape
     stars.push(
-        // Torso and shoulders
-        { x: position.x + 2, y: position.y - 5, brightness: 0.9, size: 3.2 }, // Waist/connection point
-        { x: position.x + 5, y: position.y - 12, brightness: 0.9, size: 3 }, // Torso
-        { x: position.x + 8, y: position.y - 20, brightness: 0.85, size: 2.8 }, // Head
+        // Human waist (connection point)
+        { x: position.x + 5, y: position.y, brightness: 0.9, size: 3.2 },
         
-        // Bow and arrow - detailed archery pose
-        { x: position.x, y: position.y - 8, brightness: 0.75, size: 2.2 }, // Left arm (holding bow)
-        { x: position.x + 12, y: position.y - 15, brightness: 0.7, size: 2 }, // Right arm (draw)
+        // Human torso and shoulders
+        { x: position.x + 5, y: position.y - 8, brightness: 0.9, size: 3 }, // Chest
+        { x: position.x + 2, y: position.y - 12, brightness: 0.8, size: 2.5 }, // Left shoulder
+        { x: position.x + 8, y: position.y - 12, brightness: 0.8, size: 2.5 }, // Right shoulder
         
-        // Bow
-        { x: position.x - 3, y: position.y - 10, brightness: 0.65, size: 1.8 }, // Bow top
-        { x: position.x - 2, y: position.y - 6, brightness: 0.65, size: 1.8 }, // Bow bottom
+        // Head
+        { x: position.x + 5, y: position.y - 18, brightness: 0.85, size: 2.8 },
         
-        // Arrow (pointing southeast as per lore)
-        { x: position.x + 18, y: position.y - 12, brightness: 0.8, size: 2.5 }, // Arrow shaft
-        { x: position.x + 28, y: position.y - 8, brightness: 0.95, size: 3.5 }, // Arrow point (brightest - navigation star)
-        { x: position.x + 8, y: position.y - 16, brightness: 0.7, size: 2 } // Fletching
+        // ARCHERY POSE - pointing southeast
+        // Left arm (holding bow)
+        { x: position.x - 2, y: position.y - 10, brightness: 0.75, size: 2.2 },
+        
+        // Right arm (drawing bowstring)
+        { x: position.x + 12, y: position.y - 10, brightness: 0.75, size: 2.2 },
+        
+        // Bow (vertical line on left side)
+        { x: position.x - 4, y: position.y - 8, brightness: 0.65, size: 1.8 },
+        { x: position.x - 4, y: position.y - 12, brightness: 0.65, size: 1.8 },
+        
+        // Arrow (pointing southeast - the navigation element)
+        { x: position.x + 15, y: position.y - 8, brightness: 0.8, size: 2.5 }, // Arrow shaft
+        { x: position.x + 25, y: position.y - 2, brightness: 0.95, size: 3.8 }, // Arrow tip (brightest for navigation)
+        { x: position.x + 10, y: position.y - 12, brightness: 0.7, size: 2 }  // Fletching
     );
     
     return stars;
 }
-
 generateSpiderWebStars(position, seed) {
     const stars = [];
     
