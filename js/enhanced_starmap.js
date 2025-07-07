@@ -410,7 +410,7 @@ class EnhancedStarMap {
         }
         
         // Calculate random component
-        const constellationSeed = constellation.id * 13.7;
+        const constellationSeed = constellation.id * 1.68;
         const timeBasedSeed = timeOfNight * 0.1;
         const randomOffset = Math.sin(constellationSeed + timeBasedSeed) * profile.randomFactor;
         
