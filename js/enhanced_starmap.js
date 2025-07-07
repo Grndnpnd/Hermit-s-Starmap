@@ -890,6 +890,162 @@ generateShatteredStars(position, seed) {
     
     return stars;
 }
+   generateSwanStars(position, seed) {
+    const stars = [];
+    
+    // Swan body
+    stars.push(
+        { x: position.x, y: position.y + 10, brightness: 0.9, size: 3.5 }, // Body
+        { x: position.x, y: position.y - 5, brightness: 0.85, size: 3 }, // Neck
+        { x: position.x + 3, y: position.y - 15, brightness: 0.8, size: 2.5 } // Head
+    );
+    
+    // Wings spread
+    const wingStars = [
+        { x: position.x - 18, y: position.y + 5, brightness: 0.75, size: 2.8 }, // Left wing tip
+        { x: position.x - 12, y: position.y + 8, brightness: 0.8, size: 2.5 }, // Left wing mid
+        { x: position.x - 8, y: position.y + 6, brightness: 0.82, size: 2.3 }, // Left wing base
+        { x: position.x + 15, y: position.y + 5, brightness: 0.75, size: 2.8 }, // Right wing tip
+        { x: position.x + 10, y: position.y + 8, brightness: 0.8, size: 2.5 }, // Right wing mid
+        { x: position.x + 6, y: position.y + 6, brightness: 0.82, size: 2.3 } // Right wing base
+    ];
+    
+    stars.push(...wingStars);
+    return stars;
+}
+
+generateFlowingStars(position, seed) {
+    const stars = [];
+    
+    // Flowing cloak pattern - like a sine wave
+    for (let i = 0; i < 12; i++) {
+        const t = i / 11; // 0 to 1
+        const x = position.x + (t - 0.5) * 60; // Spread across 60 units
+        const y = position.y + Math.sin(t * Math.PI * 2.5) * 15 + Math.sin(t * Math.PI * 5) * 6;
+        
+        const brightness = 0.5 + this.seededRandom(seed + i) * 0.4;
+        const size = 1.8 + this.seededRandom(seed + i + 10) * 1.5;
+        
+        stars.push({ x, y, brightness, size });
+    }
+    
+    // Add a few "fabric edge" stars
+    for (let i = 0; i < 6; i++) {
+        const angle = this.seededRandom(seed + i + 20) * Math.PI * 2;
+        const distance = 25 + this.seededRandom(seed + i + 30) * 15;
+        
+        stars.push({
+            x: position.x + Math.cos(angle) * distance,
+            y: position.y + Math.sin(angle) * distance,
+            brightness: 0.4 + this.seededRandom(seed + i + 40) * 0.3,
+            size: 1.5 + this.seededRandom(seed + i + 50) * 1
+        });
+    }
+    
+    return stars;
+}
+
+generateCentaurStars(position, seed) {
+    const stars = [];
+    
+    // Horse body (4 legs, body, neck)
+    stars.push(
+        { x: position.x - 25, y: position.y + 20, brightness: 0.8, size: 2.5 }, // Back legs
+        { x: position.x - 15, y: position.y + 25, brightness: 0.7, size: 2 }, // Front legs
+        { x: position.x - 20, y: position.y + 10, brightness: 0.9, size: 3.5 }, // Body
+        { x: position.x - 8, y: position.y, brightness: 0.85, size: 3 } // Neck junction
+    );
+    
+    // Human torso and bow
+    stars.push(
+        { x: position.x + 5, y: position.y - 10, brightness: 0.9, size: 3 }, // Torso
+        { x: position.x + 8, y: position.y - 18, brightness: 0.8, size: 2.5 }, // Head
+        { x: position.x + 25, y: position.y - 15, brightness: 0.95, size: 3.5 }, // Arrow point (brightest)
+        { x: position.x + 18, y: position.y - 12, brightness: 0.7, size: 2 } // Bow
+    );
+    
+    return stars;
+}
+
+generateSpiderWebStars(position, seed) {
+    const stars = [];
+    
+    // Spider body (abdomen and cephalothorax)
+    stars.push(
+        { x: position.x, y: position.y, brightness: 0.95, size: 4 }, // Abdomen
+        { x: position.x, y: position.y - 6, brightness: 0.9, size: 3 } // Cephalothorax
+    );
+    
+    // 8 legs in spider formation
+    const legAngles = [
+        -Math.PI/4, -3*Math.PI/8, -5*Math.PI/8, -3*Math.PI/4, // Left legs
+        Math.PI/4, 3*Math.PI/8, 5*Math.PI/8, 3*Math.PI/4    // Right legs
+    ];
+    
+    legAngles.forEach((baseAngle, legIndex) => {
+        // Each leg has 3 segments
+        for (let segment = 1; segment <= 3; segment++) {
+            const segmentAngle = baseAngle + (segment - 2) * 0.2; // Leg curves
+            const distance = segment * 8;
+            
+            stars.push({
+                x: position.x + Math.cos(segmentAngle) * distance,
+                y: position.y + Math.sin(segmentAngle) * distance,
+                brightness: 0.7 - segment * 0.1,
+                size: 2.5 - segment * 0.3
+            });
+        }
+    });
+    
+    // Web anchor points
+    const webAngles = [0, 2*Math.PI/3, 4*Math.PI/3];
+    webAngles.forEach(angle => {
+        for (let i = 1; i <= 3; i++) {
+            const distance = i * 12;
+            stars.push({
+                x: position.x + Math.cos(angle) * distance,
+                y: position.y + Math.sin(angle) * distance,
+                brightness: 0.5 - i * 0.08,
+                size: 1.8 - i * 0.2
+            });
+        }
+    });
+    
+    return stars;
+}
+
+generateShatteredStars(position, seed) {
+    const stars = [];
+    
+    // Broken trail with deliberate gaps
+    const segments = [
+        { start: -40, end: -20 },
+        { start: -10, end: 5 },
+        { start: 15, end: 25 },
+        { start: 35, end: 50 }
+    ];
+    
+    segments.forEach((segment, segIndex) => {
+        const segmentLength = segment.end - segment.start;
+        const numStars = 2 + Math.floor(this.seededRandom(seed + segIndex) * 4);
+        
+        for (let i = 0; i < numStars; i++) {
+            const progress = i / (numStars - 1 || 1);
+            const x = position.x + segment.start + progress * segmentLength;
+            const y = position.y + (this.seededRandom(seed + segIndex + i) - 0.5) * 25;
+            
+            stars.push({
+                x: x,
+                y: y,
+                brightness: 0.4 + this.seededRandom(seed + segIndex + i + 10) * 0.5,
+                size: 1.5 + this.seededRandom(seed + segIndex + i + 20) * 2
+            });
+        }
+    });
+    
+    return stars;
+}
+    
     // Enhanced visibility and filtering logic with movement integration
     updateVisibleConstellations() {
         if (!window.EnhancedConstellationData?.ConstellationFilter) {
