@@ -775,20 +775,48 @@ generateVariedStars(position, seed, constellation) {
 generateCentaurStars(position, seed) {
     const stars = [];
     
-    // Horse body (4 legs, body, neck)
+    // Horse body - more detailed horse shape
     stars.push(
-        { x: position.x - 25, y: position.y + 20, brightness: 0.8, size: 2.5 }, // Back legs
-        { x: position.x - 15, y: position.y + 25, brightness: 0.7, size: 2 }, // Front legs
-        { x: position.x - 20, y: position.y + 10, brightness: 0.9, size: 3.5 }, // Body
-        { x: position.x - 8, y: position.y, brightness: 0.85, size: 3 } // Neck junction
+        // Back legs (two separate legs)
+        { x: position.x - 30, y: position.y + 25, brightness: 0.75, size: 2.2 }, // Back left leg
+        { x: position.x - 25, y: position.y + 25, brightness: 0.75, size: 2.2 }, // Back right leg
+        
+        // Front legs (two separate legs)  
+        { x: position.x - 15, y: position.y + 25, brightness: 0.75, size: 2.2 }, // Front left leg
+        { x: position.x - 10, y: position.y + 25, brightness: 0.75, size: 2.2 }, // Front right leg
+        
+        // Horse body and back
+        { x: position.x - 28, y: position.y + 15, brightness: 0.85, size: 3 }, // Hindquarters
+        { x: position.x - 22, y: position.y + 8, brightness: 0.9, size: 3.5 }, // Main body
+        { x: position.x - 15, y: position.y + 12, brightness: 0.85, size: 3 }, // Chest
+        
+        // Horse neck and head
+        { x: position.x - 8, y: position.y + 5, brightness: 0.8, size: 2.8 }, // Neck
+        { x: position.x - 5, y: position.y - 2, brightness: 0.75, size: 2.5 }, // Horse head
+        
+        // Tail
+        { x: position.x - 35, y: position.y + 10, brightness: 0.6, size: 1.8 }
     );
     
-    // Human torso and bow
+    // Human torso - more detailed human upper body
     stars.push(
-        { x: position.x + 5, y: position.y - 10, brightness: 0.9, size: 3 }, // Torso
-        { x: position.x + 8, y: position.y - 18, brightness: 0.8, size: 2.5 }, // Head
-        { x: position.x + 25, y: position.y - 15, brightness: 0.95, size: 3.5 }, // Arrow point (brightest)
-        { x: position.x + 18, y: position.y - 12, brightness: 0.7, size: 2 } // Bow
+        // Torso and shoulders
+        { x: position.x + 2, y: position.y - 5, brightness: 0.9, size: 3.2 }, // Waist/connection point
+        { x: position.x + 5, y: position.y - 12, brightness: 0.9, size: 3 }, // Torso
+        { x: position.x + 8, y: position.y - 20, brightness: 0.85, size: 2.8 }, // Head
+        
+        // Bow and arrow - detailed archery pose
+        { x: position.x, y: position.y - 8, brightness: 0.75, size: 2.2 }, // Left arm (holding bow)
+        { x: position.x + 12, y: position.y - 15, brightness: 0.7, size: 2 }, // Right arm (draw)
+        
+        // Bow
+        { x: position.x - 3, y: position.y - 10, brightness: 0.65, size: 1.8 }, // Bow top
+        { x: position.x - 2, y: position.y - 6, brightness: 0.65, size: 1.8 }, // Bow bottom
+        
+        // Arrow (pointing southeast as per lore)
+        { x: position.x + 18, y: position.y - 12, brightness: 0.8, size: 2.5 }, // Arrow shaft
+        { x: position.x + 28, y: position.y - 8, brightness: 0.95, size: 3.5 }, // Arrow point (brightest - navigation star)
+        { x: position.x + 8, y: position.y - 16, brightness: 0.7, size: 2 } // Fletching
     );
     
     return stars;
@@ -1361,7 +1389,14 @@ updateStarCount() {
                 twinkle *= magicalPulse;
                 
                 const alpha = star.brightness * twinkle;
-                const baseColor = isHighlighted ? emotionalColor : '255, 255, 255';
+                let baseColor;
+                if (star.color) {
+                    baseColor = star.color;
+                } else if (isHighlighted) {
+                    baseColor = emotionalColor;
+                } else {
+                    baseColor = '255, 255, 255';
+                }    
                 
                 const enhancedSize = star.size * this.viewState.zoom * 
                     (1 + ((constellation.magicalIntensity || 3) * 0.05));
