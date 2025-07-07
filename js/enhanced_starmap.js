@@ -865,7 +865,31 @@ generateShatteredStars(position, seed) {
     
     return stars;
 }
+    generateLanternBearerStars(position) {
+    const stars = [];
     
+    // Super bright yellow lantern flame
+    stars.push({
+        x: position.x,
+        y: position.y - 15, // Above center
+        brightness: 1.0,
+        size: 5.5,
+        color: '255, 223, 0' // Bright yellow
+    });
+    
+    // Cloaked figure holding the lantern
+    stars.push(
+        { x: position.x, y: position.y, brightness: 0.85, size: 3.5 }, // Center/torso
+        { x: position.x - 8, y: position.y + 8, brightness: 0.75, size: 2.5 }, // Left shoulder
+        { x: position.x + 8, y: position.y + 8, brightness: 0.75, size: 2.5 }, // Right shoulder
+        { x: position.x, y: position.y + 20, brightness: 0.65, size: 2 }, // Base of cloak
+        { x: position.x - 12, y: position.y + 15, brightness: 0.6, size: 1.8 }, // Left cloak edge
+        { x: position.x + 12, y: position.y + 15, brightness: 0.6, size: 1.8 }, // Right cloak edge
+        { x: position.x - 3, y: position.y - 8, brightness: 0.7, size: 2.2 } // Lantern handle/arm
+    );
+    
+    return stars;
+}
     // Enhanced visibility and filtering logic with movement integration
     updateVisibleConstellations() {
         if (!window.EnhancedConstellationData?.ConstellationFilter) {
