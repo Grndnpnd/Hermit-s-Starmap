@@ -126,3 +126,32 @@ untouched except for three additive features (search, drawer, touch). The
   important names always keep their spot. Every label now has a thin dark halo
   so it stays readable across stars, and labels for constellations that are
   mostly risen/set don't draw at all.
+
+---
+
+# Rare skies: the ambient event ladder
+
+A rarity ladder for the background, shooting stars staying the everyday sight:
+
+- **Shooting stars** (common, unchanged) — every 5–12s, plus a brief natural
+  flurry of 8–10 in a couple of seconds every few minutes.
+- **Distant galaxies** (uncommon) — every ~1–2 minutes a faint galaxy fades in
+  somewhere in the upper sky for ~25–35s and fades away: spirals with two arms
+  or squashed ellipticals, tinted violet/teal/gold, slowly turning, drawn
+  BEHIND the stars where the deep sky belongs.
+- **Auroras** (rare, or summoned) — on its own, roughly every 3–6 minutes the
+  sky has a 45% chance of a ~50s aurora: three sinuous curtains near the top,
+  green fading up into violet, screen-blended so stars shine through, breathing
+  on an 8s ramp. The **✨ Aurora veil** checkbox (or `aurora=1`) holds it on
+  permanently and slightly brighter.
+- **Meteor shower** (summoned only) — the **💫 Meteor shower** checkbox (or
+  `shower=1`) opens a proper radiant: 2–3 meteors per second all streaming
+  outward from a single point in the upper sky, the way real showers work.
+
+All ambient randomness respects `prefers-reduced-motion` (forced aurora renders
+as a static gentle veil). New URL params: `aurora=1`, `shower=1` — stack with
+everything else, e.g. `?s=winter&t=0&comet=1&aurora=1&play=1`.
+
+**Module handshake:** Frostfey Tundra v1.11.0's sky link now appends `aurora=1`
+whenever the weather is the Feylight Veil — set the aurora in Foundry, and the
+same lights ripple across feystarmap.com for everyone who clicks.

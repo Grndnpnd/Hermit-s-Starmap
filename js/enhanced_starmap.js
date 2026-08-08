@@ -45,7 +45,9 @@ class EnhancedStarMap {
             magicalIntensityMin: 0,
             magicalIntensityMax: 5,
             showSpecialEvents: true,
-            comet: false
+            comet: false,
+            aurora: false,
+            shower: false
         };
 
         // Time-lapse night + remembered sky (phase 4)
@@ -113,6 +115,8 @@ class EnhancedStarMap {
         }
         if (p.has('se')) this.filters.showSpecialEvents = p.get('se') !== '0';
         if (p.has('comet')) this.filters.comet = p.get('comet') === '1';
+        if (p.has('aurora')) this.filters.aurora = p.get('aurora') === '1';
+        if (p.has('shower')) this.filters.shower = p.get('shower') === '1';
         this._autoplay = p.get('play') === '1';
         if (p.has('names')) this.displayOptions.showNames = p.get('names') !== '0';
         if (p.has('lines')) this.displayOptions.showLines = p.get('lines') !== '0';
@@ -131,6 +135,8 @@ class EnhancedStarMap {
         p.set('t', String(this.filters.timeOfNight));
         p.set('se', this.filters.showSpecialEvents ? '1' : '0');
         if (this.filters.comet) p.set('comet', '1');
+        if (this.filters.aurora) p.set('aurora', '1');
+        if (this.filters.shower) p.set('shower', '1');
         if (this.timelapse?.playing) p.set('play', '1');
         p.set('names', this.displayOptions.showNames ? '1' : '0');
         p.set('lines', this.displayOptions.showLines ? '1' : '0');
@@ -273,6 +279,10 @@ class EnhancedStarMap {
         if (specialEvents) specialEvents.checked = this.filters.showSpecialEvents;
         const cometToggle = document.getElementById('comet-toggle');
         if (cometToggle) cometToggle.checked = this.filters.comet;
+        const auroraToggle = document.getElementById('aurora-toggle');
+        if (auroraToggle) auroraToggle.checked = this.filters.aurora;
+        const showerToggle = document.getElementById('shower-toggle');
+        if (showerToggle) showerToggle.checked = this.filters.shower;
 
         // Remembered sky controls
         this.updateMemoryUI();
@@ -531,6 +541,20 @@ class EnhancedStarMap {
         if (cometBox) {
             cometBox.addEventListener('change', (e) => {
                 this.filters.comet = e.target.checked;
+                this.saveState();
+            });
+        }
+        const auroraBox = document.getElementById('aurora-toggle');
+        if (auroraBox) {
+            auroraBox.addEventListener('change', (e) => {
+                this.filters.aurora = e.target.checked;
+                this.saveState();
+            });
+        }
+        const showerBox = document.getElementById('shower-toggle');
+        if (showerBox) {
+            showerBox.addEventListener('change', (e) => {
+                this.filters.shower = e.target.checked;
                 this.saveState();
             });
         }
@@ -1517,6 +1541,7 @@ updateStarCount() {
         this.ctx.clearRect(0, 0, rect.width, rect.height);
         
         this.renderEnhancedBackground();
+        this.renderGalaxies(timestamp);
         
         if (this.displayOptions.showGrid) {
             this.renderEnhancedGrid();
@@ -1524,6 +1549,7 @@ updateStarCount() {
         
         this.renderEnhancedStars(timestamp);
         this.renderMeteors(timestamp);
+        this.renderAurora(timestamp);
         if (this.displayOptions.showRemembered && this.skyMemory) this.renderRememberedSky();
         this.renderEnhancedConstellations(timestamp);
         if (this.filters.comet) this.renderComet(timestamp);
@@ -1614,17 +1640,41 @@ updateStarCount() {
         if (this._reducedMotion) return;
         const rect = this.canvas.getBoundingClientRect();
         const amb = this._ambient;
+        // A brief natural flurry every few minutes keeps lone shooting stars the norm
+        if (!this.filters.shower && t > (amb.nextFlurry ?? 0)) {
+            amb.nextFlurry = t + 140000 + Math.random() * 130000;
+            if (Math.random() < 0.5) amb.flurryUntil = t + 2300;
+        }
         if (t > amb.nextMeteor) {
-            amb.nextMeteor = t + (this.filters.comet ? 2600 : 5200) + Math.random() * 7000;
-            const dir = Math.random() < 0.5 ? 1 : -1;
-            amb.meteors.push({
-                x: rect.width * (0.08 + Math.random() * 0.84),
-                y: rect.height * Math.random() * 0.4,
-                vx: dir * (4 + Math.random() * 5),
-                vy: 2.5 + Math.random() * 3,
-                maxLife: 550 + Math.random() * 550,
-                born: t
-            });
+            const shower = this.filters.shower;
+            const inFlurry = amb.flurryUntil && t < amb.flurryUntil;
+            amb.nextMeteor = t + (shower ? 340 + Math.random() * 480
+                : inFlurry ? 240 + Math.random() * 220
+                : (this.filters.comet ? 2600 : 5200) + Math.random() * 7000);
+            if (shower) {
+                // Every shower meteor streams outward from one radiant point
+                const rx = rect.width * 0.68, ry = rect.height * 0.16;
+                const ang = Math.PI * 0.15 + Math.random() * Math.PI * 0.9;
+                const speed = 5.5 + Math.random() * 4;
+                amb.meteors.push({
+                    x: rx + Math.cos(ang) * 18,
+                    y: ry + Math.sin(ang) * 18,
+                    vx: Math.cos(ang) * speed,
+                    vy: Math.sin(ang) * speed,
+                    maxLife: 650 + Math.random() * 600,
+                    born: t
+                });
+            } else {
+                const dir = Math.random() < 0.5 ? 1 : -1;
+                amb.meteors.push({
+                    x: rect.width * (0.08 + Math.random() * 0.84),
+                    y: rect.height * Math.random() * 0.4,
+                    vx: dir * (4 + Math.random() * 5),
+                    vy: 2.5 + Math.random() * 3,
+                    maxLife: 550 + Math.random() * 550,
+                    born: t
+                });
+            }
         }
         amb.meteors = amb.meteors.filter(m => t - m.born < m.maxLife);
         for (const m of amb.meteors) {
@@ -1713,6 +1763,119 @@ updateStarCount() {
         this.ctx.beginPath();
         this.ctx.arc(x, y, 2.6, 0, Math.PI * 2);
         this.ctx.fill();
+    }
+
+    renderGalaxies(t) {
+        if (this._reducedMotion) return;
+        const rect = this.canvas.getBoundingClientRect();
+        const amb = this._ambient;
+        amb.galaxies = amb.galaxies || [];
+        if (amb.nextGalaxy === undefined) amb.nextGalaxy = t + 20000 + Math.random() * 30000;
+        if (t > amb.nextGalaxy) {
+            amb.nextGalaxy = t + 50000 + Math.random() * 80000;
+            amb.galaxies.push({
+                x: rect.width * (0.15 + Math.random() * 0.7),
+                y: rect.height * (0.08 + Math.random() * 0.5),
+                s: 36 + Math.random() * 55,
+                a0: Math.random() * Math.PI * 2,
+                spin: (Math.random() < 0.5 ? -1 : 1) * 0.00002,
+                squash: 0.42 + Math.random() * 0.25,
+                spiral: Math.random() < 0.65,
+                tint: ['139,92,246', '110,231,183', '251,191,36'][Math.floor(Math.random() * 3)],
+                born: t,
+                life: 22000 + Math.random() * 16000
+            });
+        }
+        amb.galaxies = amb.galaxies.filter(g => t - g.born < g.life);
+        for (const g of amb.galaxies) {
+            const age = (t - g.born) / g.life;
+            const env = age < 0.25 ? age / 0.25 : age > 0.75 ? (1 - age) / 0.25 : 1;
+            const A = 0.14 * env;
+            if (A <= 0.004) continue;
+            this.ctx.save();
+            this.ctx.translate(g.x, g.y);
+            this.ctx.rotate(g.a0 + (t - g.born) * g.spin);
+            this.ctx.scale(1, g.squash);
+            const core = this.ctx.createRadialGradient(0, 0, 0, 0, 0, g.s);
+            core.addColorStop(0, `rgba(255,248,230,${A * 1.5})`);
+            core.addColorStop(0.25, `rgba(${g.tint},${A})`);
+            core.addColorStop(1, `rgba(${g.tint},0)`);
+            this.ctx.fillStyle = core;
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, g.s, 0, Math.PI * 2);
+            this.ctx.fill();
+            if (g.spiral) {
+                this.ctx.strokeStyle = `rgba(${g.tint},${A * 0.9})`;
+                this.ctx.lineWidth = 5;
+                for (let arm = 0; arm < 2; arm++) {
+                    this.ctx.beginPath();
+                    let started = false;
+                    for (let i = 0; i <= 26; i++) {
+                        const th = (i / 26) * Math.PI * 1.7 + arm * Math.PI;
+                        const r = g.s * 0.16 * Math.exp(0.28 * th);
+                        if (r > g.s * 1.05) break;
+                        const px = Math.cos(th) * r, py = Math.sin(th) * r;
+                        if (!started) { this.ctx.moveTo(px, py); started = true; }
+                        else this.ctx.lineTo(px, py);
+                    }
+                    this.ctx.stroke();
+                }
+            }
+            this.ctx.restore();
+        }
+    }
+
+    renderAurora(t) {
+        const forced = this.filters.aurora;
+        const amb = this._ambient;
+        if (!forced) {
+            if (this._reducedMotion) return;
+            if (amb.auroraNext === undefined) amb.auroraNext = t + 60000 + Math.random() * 90000;
+            if (!amb.auroraUntil && t > amb.auroraNext) {
+                amb.auroraNext = t + 170000 + Math.random() * 170000;
+                if (Math.random() < 0.45) {
+                    amb.auroraStart = t;
+                    amb.auroraUntil = t + 42000 + Math.random() * 22000;
+                }
+            }
+            if (!amb.auroraUntil) return;
+            if (t > amb.auroraUntil) { amb.auroraUntil = null; return; }
+        }
+        const rect = this.canvas.getBoundingClientRect();
+        let env = 1;
+        if (!forced) {
+            const inT = (t - amb.auroraStart) / 8000;
+            const outT = (amb.auroraUntil - t) / 8000;
+            env = Math.max(0, Math.min(1, inT, outT));
+        }
+        const T = this._reducedMotion ? 0 : t;
+        this.ctx.save();
+        this.ctx.globalCompositeOperation = 'screen';
+        for (let b = 0; b < 3; b++) {
+            const baseY = rect.height * (0.08 + 0.075 * b);
+            const h = 95 + 45 * b;
+            const shimmer = this._reducedMotion ? 0.7 : 0.55 + 0.45 * Math.sin(T * 0.0009 + b * 2.1);
+            const A = 0.16 * env * shimmer * (forced ? 1.15 : 1);
+            if (A <= 0.004) continue;
+            const grad = this.ctx.createLinearGradient(0, baseY - 20, 0, baseY + h);
+            grad.addColorStop(0, 'rgba(139,92,246,0)');
+            grad.addColorStop(0.55, `rgba(45,255,168,${A * 0.55})`);
+            grad.addColorStop(1, `rgba(110,231,183,${A})`);
+            this.ctx.fillStyle = grad;
+            this.ctx.beginPath();
+            const step = 34;
+            for (let x = -step; x <= rect.width + step; x += step) {
+                const y = baseY + Math.sin(x * 0.004 + T * 0.00028 + b * 2) * rect.height * 0.045;
+                if (x === -step) this.ctx.moveTo(x, y); else this.ctx.lineTo(x, y);
+            }
+            for (let x = rect.width + step; x >= -step; x -= step) {
+                const y = baseY + h + Math.sin(x * 0.006 + T * 0.0004 + b) * rect.height * 0.03;
+                this.ctx.lineTo(x, y);
+            }
+            this.ctx.closePath();
+            this.ctx.fill();
+        }
+        this.ctx.restore();
     }
     
     renderEnhancedConstellations(timestamp) {
