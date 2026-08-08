@@ -44,8 +44,13 @@ class EnhancedStarMap {
             timeOfNight: 21,
             magicalIntensityMin: 0,
             magicalIntensityMax: 5,
-            showSpecialEvents: true
+            showSpecialEvents: true,
+            comet: false
         };
+
+        // Ambient sky (shooting stars, comet)
+        this._ambient = { meteors: [], nextMeteor: 0 };
+        this._reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
         
         // Constellation search (UI overhaul)
         this.searchTerm = '';
@@ -100,6 +105,7 @@ class EnhancedStarMap {
             if (!isNaN(t) && t >= 0 && t <= 23) this.filters.timeOfNight = t;
         }
         if (p.has('se')) this.filters.showSpecialEvents = p.get('se') !== '0';
+        if (p.has('comet')) this.filters.comet = p.get('comet') === '1';
         if (p.has('names')) this.displayOptions.showNames = p.get('names') !== '0';
         if (p.has('lines')) this.displayOptions.showLines = p.get('lines') !== '0';
         if (p.has('grid')) this.displayOptions.showGrid = p.get('grid') === '1';
@@ -116,6 +122,7 @@ class EnhancedStarMap {
         p.set('s', this.filters.season);
         p.set('t', String(this.filters.timeOfNight));
         p.set('se', this.filters.showSpecialEvents ? '1' : '0');
+        if (this.filters.comet) p.set('comet', '1');
         p.set('names', this.displayOptions.showNames ? '1' : '0');
         p.set('lines', this.displayOptions.showLines ? '1' : '0');
         p.set('grid', this.displayOptions.showGrid ? '1' : '0');
@@ -161,6 +168,12 @@ class EnhancedStarMap {
             checkbox.checked = this.filters.emotional.includes(checkbox.value);
         });
         
+        // Sky event checkboxes
+        const specialEvents = document.getElementById('show-special-events');
+        if (specialEvents) specialEvents.checked = this.filters.showSpecialEvents;
+        const cometToggle = document.getElementById('comet-toggle');
+        if (cometToggle) cometToggle.checked = this.filters.comet;
+
         // Update display toggle buttons
         this.updateDisplayToggleStates();
     }
@@ -383,6 +396,24 @@ class EnhancedStarMap {
             });
         }
         
+        // Sky events: special events (previously unwired) + comet
+        const specialEventsBox = document.getElementById('show-special-events');
+        if (specialEventsBox) {
+            specialEventsBox.addEventListener('change', (e) => {
+                this.filters.showSpecialEvents = e.target.checked;
+                this.updateVisibleConstellations();
+                this.updateConstellationList();
+                this.saveState();
+            });
+        }
+        const cometBox = document.getElementById('comet-toggle');
+        if (cometBox) {
+            cometBox.addEventListener('change', (e) => {
+                this.filters.comet = e.target.checked;
+                this.saveState();
+            });
+        }
+
         // Constellation search
         const searchInput = document.getElementById('constellation-search');
         if (searchInput) {
@@ -1362,7 +1393,9 @@ updateStarCount() {
         }
         
         this.renderEnhancedStars(timestamp);
+        this.renderMeteors(timestamp);
         this.renderEnhancedConstellations(timestamp);
+        if (this.filters.comet) this.renderComet(timestamp);
         
         if (timestamp - this.viewState.lastSaveTime > 30000) {
             this.saveState();
@@ -1416,6 +1449,10 @@ updateStarCount() {
         for (let i = 0; i < this.stars.length; i += step) {
             const star = this.stars[i];
             const screenPos = this.worldToScreen(star.x, star.y);
+            if (!this._reducedMotion) {
+                screenPos.x += Math.sin(timestamp * 0.00008 + i * 1.37) * (2 + (i % 3));
+                screenPos.y += Math.cos(timestamp * 0.00006 + i * 2.11) * (1.5 + (i % 2));
+            }
             
             if (this.isOnScreen(screenPos.x, screenPos.y)) {
                 const twinkleBase = Math.sin(timestamp * star.twinkleSpeed * 0.001 + star.twinkle) * 0.4 + 0.6;
@@ -1440,6 +1477,111 @@ updateStarCount() {
                 }
             }
         }
+    }
+
+    renderMeteors(t) {
+        if (this._reducedMotion) return;
+        const rect = this.canvas.getBoundingClientRect();
+        const amb = this._ambient;
+        if (t > amb.nextMeteor) {
+            amb.nextMeteor = t + (this.filters.comet ? 2600 : 5200) + Math.random() * 7000;
+            const dir = Math.random() < 0.5 ? 1 : -1;
+            amb.meteors.push({
+                x: rect.width * (0.08 + Math.random() * 0.84),
+                y: rect.height * Math.random() * 0.4,
+                vx: dir * (4 + Math.random() * 5),
+                vy: 2.5 + Math.random() * 3,
+                maxLife: 550 + Math.random() * 550,
+                born: t
+            });
+        }
+        amb.meteors = amb.meteors.filter(m => t - m.born < m.maxLife);
+        for (const m of amb.meteors) {
+            const age = (t - m.born) / m.maxLife;
+            const fade = age < 0.2 ? age / 0.2 : 1 - (age - 0.2) / 0.8;
+            const px = m.x + m.vx * (t - m.born) / 16;
+            const py = m.y + m.vy * (t - m.born) / 16;
+            const tail = 3 + 9 * (1 - age);
+            const grad = this.ctx.createLinearGradient(px, py, px - m.vx * tail, py - m.vy * tail);
+            grad.addColorStop(0, `rgba(255,255,255,${0.9 * fade})`);
+            grad.addColorStop(0.35, `rgba(251,191,36,${0.5 * fade})`);
+            grad.addColorStop(1, 'rgba(139,92,246,0)');
+            this.ctx.strokeStyle = grad;
+            this.ctx.lineWidth = 1.6;
+            this.ctx.beginPath();
+            this.ctx.moveTo(px, py);
+            this.ctx.lineTo(px - m.vx * tail, py - m.vy * tail);
+            this.ctx.stroke();
+        }
+    }
+
+    renderComet(t) {
+        const rect = this.canvas.getBoundingClientRect();
+        const CYCLE = 70000, TRAVEL = 48000;
+        const phase = this._reducedMotion ? TRAVEL * 0.45 : (t % CYCLE);
+        if (phase > TRAVEL) return;
+        const p = phase / TRAVEL;
+        const x = rect.width * (-0.12 + 1.24 * p);
+        const y = rect.height * (0.14 + 0.30 * p - Math.sin(p * Math.PI) * 0.06);
+
+        // Faint sky wash around the comet
+        const wash = this.ctx.createRadialGradient(x, y, 0, x, y, rect.width * 0.42);
+        wash.addColorStop(0, 'rgba(110,231,183,0.10)');
+        wash.addColorStop(0.45, 'rgba(251,191,36,0.045)');
+        wash.addColorStop(1, 'rgba(0,0,0,0)');
+        this.ctx.fillStyle = wash;
+        this.ctx.fillRect(0, 0, rect.width, rect.height);
+
+        // Twin tails streaming back along the path (ion teal, dust gold)
+        const tx = -1, ty = -0.30, norm = Math.hypot(tx, ty);
+        const ux = tx / norm, uy = ty / norm;
+        const L = rect.width * 0.30;
+        const drawTail = (spreadX, spreadY, len, rgb, alpha, width) => {
+            const ex = x + ux * len + spreadX, ey = y + uy * len + spreadY;
+            const g = this.ctx.createLinearGradient(x, y, ex, ey);
+            g.addColorStop(0, `rgba(${rgb},${alpha})`);
+            g.addColorStop(1, `rgba(${rgb},0)`);
+            this.ctx.strokeStyle = g;
+            this.ctx.lineWidth = width;
+            this.ctx.lineCap = 'round';
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, y);
+            this.ctx.quadraticCurveTo(x + ux * len * 0.5 + spreadX * 0.3, y + uy * len * 0.5 + spreadY * 0.3, ex, ey);
+            this.ctx.stroke();
+        };
+        drawTail(0, -L * 0.06, L, '110,231,183', 0.5, 7);
+        drawTail(0, -L * 0.12, L * 0.86, '110,231,183', 0.28, 12);
+        drawTail(0, L * 0.05, L * 0.62, '251,191,36', 0.45, 5);
+        drawTail(0, L * 0.10, L * 0.5, '251,191,36', 0.22, 9);
+
+        // Shed sparks along the tail
+        if (!this._reducedMotion) {
+            for (let k = 0; k < 12; k++) {
+                const sp = ((t * 0.00012) + k / 12) % 1;
+                const sx = x + ux * L * sp + Math.sin(t * 0.001 + k * 2.4) * 9 * sp;
+                const sy = y + uy * L * sp + Math.cos(t * 0.0013 + k * 1.9) * 9 * sp - L * 0.04 * sp;
+                const sa = (1 - sp) * (0.35 + 0.35 * Math.abs(Math.sin(t * 0.004 + k)));
+                this.ctx.fillStyle = `rgba(255,240,200,${sa})`;
+                this.ctx.beginPath();
+                this.ctx.arc(sx, sy, 1.1, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+        }
+
+        // Head: white core, gold corona, teal rim
+        const head = this.ctx.createRadialGradient(x, y, 0, x, y, 16);
+        head.addColorStop(0, 'rgba(255,255,255,0.95)');
+        head.addColorStop(0.3, 'rgba(255,235,180,0.75)');
+        head.addColorStop(0.7, 'rgba(110,231,183,0.3)');
+        head.addColorStop(1, 'rgba(110,231,183,0)');
+        this.ctx.fillStyle = head;
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, 16, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, 2.6, 0, Math.PI * 2);
+        this.ctx.fill();
     }
     
     renderEnhancedConstellations(timestamp) {
