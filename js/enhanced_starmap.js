@@ -626,110 +626,63 @@ class EnhancedStarMap {
         });
     }
     
-    // NEW: Time-based movement system
-    getTimeBasedOffset(constellation, timeOfNight) {
-        // Get movement profile for this constellation
+    // Movement system v2: one shared sky-wheel plus a distinct voice per type.
+    // Everything is continuous in (unwrapped) hours — no jumps, ever.
+    getTimeBasedOffset(constellation, h) {
         const profile = window.EnhancedConstellationData?.getMovementProfile(constellation.name) || {
-            orbitalSpeed: 1.0,
-            rotationSpeed: 1.0,
-            randomFactor: 0.25,
-            type: "default"
+            orbitalSpeed: 1.0, rotationSpeed: 1.0, randomFactor: 0.25, type: "default"
         };
-        
-        // Anchor stars never move
-        if (profile.type === "anchor") {
-            return { x: 0, y: 0, rotation: 0 };
-        }
-        
-        // Calculate degrees per hour (sky rotates ~15 degrees per hour in reality)
-        const degreesPerHour = 15;
-        const baseRotation = (timeOfNight * degreesPerHour * profile.rotationSpeed) * (Math.PI / 180);
-        
-        // Add constellation-specific movement patterns based on season
-        let seasonMultiplier = 1;
-        switch (constellation.season) {
-            case 'year-round':
-                seasonMultiplier = 0.7; // Eternal stars move slower
+        if (profile.type === "anchor") return { x: 0, y: 0, rotation: 0, spread: 1, perStar: null };
+
+        const seed = constellation.id * 7.68;
+        const base = constellation.basePosition || constellation.position;
+
+        // THE SKY WHEEL: every constellation turns about the celestial pole
+        // (up where the Frozen Throne holds court), each at its own radius and
+        // bearing — a rigid, stately glide rather than a spin-in-place.
+        const POLE = { x: 0, y: -560 };
+        const theta = (h * 1.05 * (profile.rotationSpeed || 1)) * (Math.PI / 180);
+        const relX = base.x - POLE.x, relY = base.y - POLE.y;
+        const cosT = Math.cos(theta), sinT = Math.sin(theta);
+        let x = (POLE.x + relX * cosT - relY * sinT) - base.x;
+        let y = (POLE.y + relX * sinT + relY * cosT) - base.y;
+        let rotation = theta;
+        let spread = 1;
+        let perStar = null;
+
+        const amp = profile.orbitalSpeed || 1;
+        switch (profile.type) {
+            case "seasonal":
+                // Breathes: the stars ease apart and together like a slow bloom
+                spread = 1 + 0.06 * Math.sin(h * (Math.PI * 2 / 6.3) + seed);
                 break;
-            case 'spring':
-                seasonMultiplier = 1.2;
+            case "wandering":
+                // Meanders off the wheel-path and drifts back on two slow tides
+                x += amp * (20 * Math.sin(h * 1.8 + seed) + 11 * Math.sin(h * 0.52 + seed * 2.2));
+                y += amp * (16 * Math.sin(h * 1.15 + seed * 1.3) + 9 * Math.cos(h * 0.43 + seed));
                 break;
-            case 'summer':
-                seasonMultiplier = 1.1;
+            case "mystical":
+                // Hangs and sways like something underwater, with a slow shimmer
+                x += amp * 14 * Math.sin(h * 0.9 + seed);
+                y += amp * 14 * Math.cos(h * 0.65 + seed * 1.7);
+                rotation += 0.07 * Math.sin(h * 2.7 + seed);
                 break;
-            case 'autumn':
-                seasonMultiplier = 1.0;
-                break;
-            case 'winter':
-                seasonMultiplier = 0.9;
-                break;
-            case 'equinox':
-            case 'solstice':
-            case 'eclipse':
-            case 'seasonal-transition':
-                seasonMultiplier = 1.4; // Special events move more dramatically
-                break;
-        }
-        
-        // Calculate random component
-        const constellationSeed = constellation.id * 7.68;
-        const timeBasedSeed = timeOfNight * 0.1;
-        const randomOffset = Math.sin(constellationSeed + timeBasedSeed) * profile.randomFactor;
-        
-        // Final rotation calculation
-        const finalRotation = baseRotation * seasonMultiplier + randomOffset;
-        
-        // Calculate orbital movement
-        const magicalBonus = (constellation.magicalIntensity || 3) * 2;
-        const orbitalRadius = (10 + magicalBonus) * profile.orbitalSpeed;
-        const orbitalAngle = (timeOfNight * 0.1 * profile.orbitalSpeed * seasonMultiplier) + constellationSeed;
-        
-        // Add some constellations with special movement patterns
-        let specialX = 0, specialY = 0;
-        
-        switch (constellation.name) {
-            case "The Driftcloak":
-            case "Wanderer's Mantle":
-                // Flowing, wave-like movement
-                specialX = Math.sin(timeOfNight * 0.15) * 25;
-                specialY = Math.cos(timeOfNight * 0.08) * 15;
-                break;
-                
-            case "The Shattered Path":
-            case "Broken Road":
-                // Erratic, broken movement
-                specialX = Math.sin(timeOfNight * 0.25 + constellationSeed) * 30;
-                specialY = Math.cos(timeOfNight * 0.18 + constellationSeed * 2) * 20;
-                if (Math.floor(timeOfNight * 2) % 3 === 0) {
-                    specialX *= -1; // Sudden direction changes
-                }
-                break;
-                
-            case "The Spider":
-            case "The Great Weaver":
-                // Web-like radial movement
-                const webAngle = timeOfNight * 0.05;
-                specialX = Math.cos(webAngle) * 15;
-                specialY = Math.sin(webAngle) * 15;
-                break;
-                
-            case "The Sibling Moons":
-            case "Twin Destinies":
-                // Figure-8 movement
-                const figure8Angle = timeOfNight * 0.1;
-                specialX = Math.sin(figure8Angle) * 20;
-                specialY = Math.sin(figure8Angle * 2) * 10;
+            case "chaotic":
+                // Smooth layered noise: unpredictable roaming, no discontinuities
+                x += amp * (20 * Math.sin(h * 0.83 + seed) + 10 * Math.sin(h * 2.19 + seed * 2.3) + 5 * Math.sin(h * 5.01 + seed * 4.1));
+                y += amp * (20 * Math.sin(h * 0.71 + seed * 1.6) + 10 * Math.sin(h * 1.93 + seed * 3.1) + 5 * Math.cos(h * 4.47 + seed * 2.7));
+                rotation += 0.10 * Math.sin(h * 1.31 + seed);
+                // The fragments themselves drift: each star slides on its own
+                // smooth path, so a broken trail keeps re-breaking differently
+                perStar = (i) => ({
+                    dx: 6 * Math.sin(h * 1.9 + seed + i * 2.7) + 3 * Math.sin(h * 4.3 + i * 1.3),
+                    dy: 6 * Math.cos(h * 1.4 + seed * 1.3 + i * 1.9) + 3 * Math.cos(h * 3.7 + i * 2.1)
+                });
                 break;
         }
-        
-        return {
-            x: Math.cos(orbitalAngle) * orbitalRadius + specialX,
-            y: Math.sin(orbitalAngle) * orbitalRadius + specialY,
-            rotation: finalRotation
-        };
+        return { x, y, rotation, spread, perStar };
     }
     
-    // NEW: Apply time-based transformations to constellation positions
     getTimeAdjustedPosition(constellation, timeOfNight) {
         const basePosition = constellation.basePosition || constellation.position;
         const offset = this.getTimeBasedOffset(constellation, timeOfNight);
@@ -740,7 +693,7 @@ class EnhancedStarMap {
         }
         
         // Apply rotation around constellation center
-        const rotatedStars = constellation.stars.map(star => {
+        const rotatedStars = constellation.stars.map((star, index) => {
             // Get relative position from constellation center
             const relativeX = star.baseX !== undefined ? star.baseX : star.x - basePosition.x;
             const relativeY = star.baseY !== undefined ? star.baseY : star.y - basePosition.y;
@@ -751,15 +704,19 @@ class EnhancedStarMap {
                 star.baseY = relativeY;
             }
             
-            // Apply rotation
-            const rotatedX = relativeX * Math.cos(offset.rotation) - relativeY * Math.sin(offset.rotation);
-            const rotatedY = relativeX * Math.sin(offset.rotation) + relativeY * Math.cos(offset.rotation);
+            // Apply spread (seasonal breathing), then rotation
+            const spread = offset.spread ?? 1;
+            const sx = relativeX * spread;
+            const sy = relativeY * spread;
+            const rotatedX = sx * Math.cos(offset.rotation) - sy * Math.sin(offset.rotation);
+            const rotatedY = sx * Math.sin(offset.rotation) + sy * Math.cos(offset.rotation);
+            const micro = offset.perStar ? offset.perStar(index) : null;
             
             // Return new absolute position
             return {
                 ...star,
-                x: basePosition.x + offset.x + rotatedX,
-                y: basePosition.y + offset.y + rotatedY
+                x: basePosition.x + offset.x + rotatedX + (micro ? micro.dx : 0),
+                y: basePosition.y + offset.y + rotatedY + (micro ? micro.dy : 0)
             };
         });
         

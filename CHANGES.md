@@ -155,3 +155,29 @@ everything else, e.g. `?s=winter&t=0&comet=1&aurora=1&play=1`.
 **Module handshake:** Frostfey Tundra v1.11.0's sky link now appends `aurora=1`
 whenever the weather is the Feylight Veil — set the aurora in Foundry, and the
 same lights ripple across feystarmap.com for everyone who clicks.
+
+---
+
+# Movement system v2: the sky stops spinning in circles
+
+The old motion rotated every constellation in place at ~15°/hour with speed
+multipliers — uniform, and the "chaotic" profile was high-frequency jitter
+(the Shattered Path teleported). Replaced wholesale:
+
+- **The sky wheel.** All non-anchor constellations now turn rigidly about a
+  celestial pole up near the Frozen Throne's station — each at its own radius
+  and bearing, exactly like a real night sky wheeling around a pole star. Low
+  constellations sweep long arcs; high ones barely stir. Uniformity gone at
+  the foundation.
+- **Each movement type has a voice on top of the wheel:**
+  - *steady* — the pure wheel, dignified and predictable
+  - *seasonal* — the stars breathe, easing apart and together (±6%, ~6h period)
+  - *wandering* — meanders off the wheel-path on two slow tides and drifts back
+  - *mystical* — hangs and sways like something underwater, with a ±4° shimmer
+  - *chaotic* — smooth three-octave layered noise: genuinely unpredictable
+    roaming with **zero discontinuities**, plus per-star fragment drift — the
+    Shattered Path's individual stars each slide on their own slow paths, so
+    the broken trail visibly re-breaks itself without ever teleporting
+  - *anchor* — still never moves
+- Amplitudes and rates still scale from your data's movement profiles, so the
+  per-constellation tuning you authored carries straight over.
