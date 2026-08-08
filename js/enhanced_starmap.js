@@ -47,6 +47,9 @@ class EnhancedStarMap {
             showSpecialEvents: true
         };
         
+        // Constellation search (UI overhaul)
+        this.searchTerm = '';
+
         // Animation and performance state
         this.animationId = null;
         this.stars = [];
@@ -224,6 +227,10 @@ class EnhancedStarMap {
     setupEventListeners() {
         // Canvas interaction
         this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+        this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
+        this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+        this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
+        this.canvas.addEventListener('touchcancel', () => { this.viewState.isDragging = false; this._pinchDist = null; });
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
         this.canvas.addEventListener('wheel', (e) => this.handleWheel(e));
@@ -376,6 +383,30 @@ class EnhancedStarMap {
             });
         }
         
+        // Constellation search
+        const searchInput = document.getElementById('constellation-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.searchTerm = e.target.value;
+                this.updateConstellationList();
+            });
+        }
+
+        // Mobile drawer
+        const drawerToggle = document.getElementById('drawer-toggle');
+        const drawerScrim = document.getElementById('drawer-scrim');
+        const chartPanel = document.getElementById('control-panel');
+        const setDrawer = (open) => {
+            if (!chartPanel) return;
+            chartPanel.classList.toggle('drawer-open', open);
+            if (drawerScrim) drawerScrim.hidden = !open;
+            if (drawerToggle) drawerToggle.setAttribute('aria-expanded', String(open));
+        };
+        if (drawerToggle) drawerToggle.addEventListener('click', () =>
+            setDrawer(!chartPanel.classList.contains('drawer-open')));
+        if (drawerScrim) drawerScrim.addEventListener('click', () => setDrawer(false));
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setDrawer(false); });
+
         // Detail panel
         const closeDetailButton = document.getElementById('close-detail');
         if (closeDetailButton) {
@@ -1207,12 +1238,21 @@ generateShatteredStars(position, seed) {
         if (!listContainer) return;
         
         listContainer.innerHTML = '';
-        
-        this.visibleConstellations.forEach(constellation => {
+
+        const term = (this.searchTerm || '').trim().toLowerCase();
+        const matches = this.visibleConstellations.filter(c =>
+            !term ||
+            c.name.toLowerCase().includes(term) ||
+            (c.alternateName || '').toLowerCase().includes(term));
+
+        matches.forEach(constellation => {
             const item = this.createConstellationListItem(constellation);
             listContainer.appendChild(item);
         });
-        
+
+        const empty = document.getElementById('list-empty');
+        if (empty) empty.hidden = !(term && matches.length === 0);
+
         this.updateConstellationCount();
     }
     
@@ -1719,6 +1759,69 @@ updateStarCount() {
         const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
         this.viewState.zoom = Math.max(0.1, Math.min(4, this.viewState.zoom * zoomFactor));
         this.saveState();
+    }
+
+    _touchDistance(e) {
+        const [a, b] = [e.touches[0], e.touches[1]];
+        return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    }
+
+    handleTouchStart(e) {
+        if (e.touches.length === 1) {
+            const t = e.touches[0];
+            this.viewState.isDragging = true;
+            this.viewState.lastMouseX = t.clientX;
+            this.viewState.lastMouseY = t.clientY;
+            this._touchMoved = false;
+            this._pinchDist = null;
+        } else if (e.touches.length === 2) {
+            e.preventDefault();
+            this.viewState.isDragging = false;
+            this._pinchDist = this._touchDistance(e);
+        }
+    }
+
+    handleTouchMove(e) {
+        if (e.touches.length === 1 && this.viewState.isDragging) {
+            e.preventDefault();
+            const t = e.touches[0];
+            const deltaX = t.clientX - this.viewState.lastMouseX;
+            const deltaY = t.clientY - this.viewState.lastMouseY;
+            if (Math.abs(deltaX) + Math.abs(deltaY) > 5) this._touchMoved = true;
+            this.viewState.offsetX += deltaX;
+            this.viewState.offsetY += deltaY;
+            this.viewState.lastMouseX = t.clientX;
+            this.viewState.lastMouseY = t.clientY;
+        } else if (e.touches.length === 2 && this._pinchDist) {
+            e.preventDefault();
+            const d = this._touchDistance(e);
+            const factor = d / this._pinchDist;
+            this.viewState.zoom = Math.max(0.1, Math.min(4, this.viewState.zoom * factor));
+            this._pinchDist = d;
+        }
+    }
+
+    handleTouchEnd(e) {
+        if (e.touches.length === 1) {
+            // dropped from pinch to single finger: re-anchor the pan
+            const t = e.touches[0];
+            this.viewState.isDragging = true;
+            this.viewState.lastMouseX = t.clientX;
+            this.viewState.lastMouseY = t.clientY;
+            this._pinchDist = null;
+            return;
+        }
+        const wasDrag = this.viewState.isDragging;
+        this.viewState.isDragging = false;
+        this._pinchDist = null;
+        this.saveState();
+        // A still tap opens the constellation under the finger
+        if (wasDrag && !this._touchMoved && e.changedTouches.length === 1) {
+            const t = e.changedTouches[0];
+            const rect = this.canvas.getBoundingClientRect();
+            const hit = this.getConstellationAtPoint(t.clientX - rect.left, t.clientY - rect.top);
+            if (hit) this.showConstellationDetail(hit);
+        }
     }
     
     handleCanvasClick(e) {
