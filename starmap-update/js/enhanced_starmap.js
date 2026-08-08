@@ -44,23 +44,9 @@ class EnhancedStarMap {
             timeOfNight: 21,
             magicalIntensityMin: 0,
             magicalIntensityMax: 5,
-            showSpecialEvents: true,
-            comet: false
+            showSpecialEvents: true
         };
-
-        // Time-lapse night + remembered sky (phase 4)
-        this.timelapse = { playing: false, last: 0, speed: 1.2 }; // game-hours per real second
-        this._renderHours = 21; // continuous, unwrapped clock for smooth motion across midnight
-        this.skyMemory = null;
-        this.displayOptions.showRemembered = false;
-
-        // Ambient sky (shooting stars, comet)
-        this._ambient = { meteors: [], nextMeteor: 0 };
-        this._reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
         
-        // Constellation search (UI overhaul)
-        this.searchTerm = '';
-
         // Animation and performance state
         this.animationId = null;
         this.stars = [];
@@ -87,7 +73,6 @@ class EnhancedStarMap {
             this.updateConstellationList();
             this.updateSeasonSelector();
             this.startAnimation();
-            if (this._autoplay && !this._reducedMotion) this.setTimelapse(true);
             this.hideLoadingOverlay();
             
             // Setup auto-save
@@ -112,8 +97,6 @@ class EnhancedStarMap {
             if (!isNaN(t) && t >= 0 && t <= 23) this.filters.timeOfNight = t;
         }
         if (p.has('se')) this.filters.showSpecialEvents = p.get('se') !== '0';
-        if (p.has('comet')) this.filters.comet = p.get('comet') === '1';
-        this._autoplay = p.get('play') === '1';
         if (p.has('names')) this.displayOptions.showNames = p.get('names') !== '0';
         if (p.has('lines')) this.displayOptions.showLines = p.get('lines') !== '0';
         if (p.has('grid')) this.displayOptions.showGrid = p.get('grid') === '1';
@@ -130,101 +113,11 @@ class EnhancedStarMap {
         p.set('s', this.filters.season);
         p.set('t', String(this.filters.timeOfNight));
         p.set('se', this.filters.showSpecialEvents ? '1' : '0');
-        if (this.filters.comet) p.set('comet', '1');
-        if (this.timelapse?.playing) p.set('play', '1');
         p.set('names', this.displayOptions.showNames ? '1' : '0');
         p.set('lines', this.displayOptions.showLines ? '1' : '0');
         p.set('grid', this.displayOptions.showGrid ? '1' : '0');
         if (this.filters.emotional.length) p.set('e', this.filters.emotional.join(','));
         return `${window.location.origin}${window.location.pathname}?${p.toString()}`;
-    }
-
-    setTimelapse(on) {
-        this.timelapse.playing = on;
-        this.timelapse.last = 0;
-        const btn = document.getElementById('time-play');
-        if (btn) {
-            btn.textContent = on ? '⏸' : '▶';
-            btn.setAttribute('aria-pressed', String(on));
-            btn.setAttribute('aria-label', on ? 'Pause the time-lapse' : 'Play the night as a time-lapse');
-        }
-        if (!on) this.saveState();
-    }
-
-    advanceTimelapse(t) {
-        if (!this.timelapse.playing) return;
-        if (!this.timelapse.last) { this.timelapse.last = t; return; }
-        const dt = (t - this.timelapse.last) / 1000;
-        this.timelapse.last = t;
-        const prevHour = Math.floor(this.filters.timeOfNight);
-        this._renderHours = (this._renderHours ?? this.filters.timeOfNight) + dt * this.timelapse.speed;
-        this.filters.timeOfNight = this._renderHours % 24;
-        const slider = document.getElementById('time-slider');
-        if (slider) slider.value = this.filters.timeOfNight;
-        this.updateTimeDisplay(this.filters.timeOfNight);
-        this.updateVisibleConstellations();
-        if (Math.floor(this.filters.timeOfNight) !== prevHour) this.updateConstellationList();
-    }
-
-    rememberSky() {
-        const seasonText = document.getElementById('season-select')?.selectedOptions?.[0]?.textContent || this.filters.season;
-        const timeText = document.getElementById('time-display')?.textContent || '';
-        this.skyMemory = {
-            label: `${seasonText} · ${timeText}`,
-            cons: this.visibleConstellations.map(c => ({
-                name: c.name,
-                stars: (c.stars || []).map(s => ({ x: s.x, y: s.y }))
-            }))
-        };
-        this.displayOptions.showRemembered = true;
-        this.updateMemoryUI();
-        this.saveState();
-    }
-
-    forgetSky() {
-        this.skyMemory = null;
-        this.displayOptions.showRemembered = false;
-        this.updateMemoryUI();
-        this.saveState();
-    }
-
-    updateMemoryUI() {
-        const row = document.getElementById('memory-row');
-        const cap = document.getElementById('memory-caption');
-        const tog = document.getElementById('toggle-remembered');
-        if (row) row.hidden = !this.skyMemory;
-        if (cap && this.skyMemory) cap.textContent = `Remembering: ${this.skyMemory.label}`;
-        if (tog) {
-            const on = !!this.displayOptions.showRemembered;
-            tog.setAttribute('aria-pressed', String(on));
-            tog.textContent = on ? 'Hide remembered sky' : 'Show remembered sky';
-        }
-    }
-
-    renderRememberedSky() {
-        this.ctx.save();
-        this.ctx.setLineDash([5, 6]);
-        for (const c of this.skyMemory.cons) {
-            if (!c.stars || !c.stars.length) continue;
-            if (c.stars.length > 1) {
-                this.ctx.strokeStyle = 'rgba(139,92,246,0.32)';
-                this.ctx.lineWidth = 1;
-                this.ctx.beginPath();
-                c.stars.forEach((s, i) => {
-                    const p = this.worldToScreen(s.x, s.y);
-                    if (i === 0) this.ctx.moveTo(p.x, p.y); else this.ctx.lineTo(p.x, p.y);
-                });
-                this.ctx.stroke();
-            }
-            this.ctx.strokeStyle = 'rgba(202,191,255,0.4)';
-            for (const s of c.stars) {
-                const p = this.worldToScreen(s.x, s.y);
-                this.ctx.beginPath();
-                this.ctx.arc(p.x, p.y, 2.4 * this.viewState.zoom, 0, Math.PI * 2);
-                this.ctx.stroke();
-            }
-        }
-        this.ctx.restore();
     }
 
     loadSavedState() {
@@ -238,9 +131,6 @@ class EnhancedStarMap {
             
             // Restore display options
             Object.assign(this.displayOptions, savedState.displayOptions || {});
-
-            // Restore remembered sky
-            this.skyMemory = savedState.skyMemory || null;
             
             // Update UI to match loaded state
             this.updateUIFromState();
@@ -268,15 +158,6 @@ class EnhancedStarMap {
             checkbox.checked = this.filters.emotional.includes(checkbox.value);
         });
         
-        // Sky event checkboxes
-        const specialEvents = document.getElementById('show-special-events');
-        if (specialEvents) specialEvents.checked = this.filters.showSpecialEvents;
-        const cometToggle = document.getElementById('comet-toggle');
-        if (cometToggle) cometToggle.checked = this.filters.comet;
-
-        // Remembered sky controls
-        this.updateMemoryUI();
-
         // Update display toggle buttons
         this.updateDisplayToggleStates();
     }
@@ -314,8 +195,7 @@ class EnhancedStarMap {
             window.EnhancedConstellationData.StarMapState.save({
                 viewState: this.viewState,
                 filters: this.filters,
-                displayOptions: this.displayOptions,
-                skyMemory: this.skyMemory
+                displayOptions: this.displayOptions
             });
             this.viewState.lastSaveTime = Date.now();
         }
@@ -344,10 +224,6 @@ class EnhancedStarMap {
     setupEventListeners() {
         // Canvas interaction
         this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
-        this.canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
-        this.canvas.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
-        this.canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e));
-        this.canvas.addEventListener('touchcancel', () => { this.viewState.isDragging = false; this._pinchDist = null; });
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
         this.canvas.addEventListener('wheel', (e) => this.handleWheel(e));
@@ -402,7 +278,6 @@ class EnhancedStarMap {
             });
             
             timeSlider.addEventListener('input', (e) => {
-                if (this.timelapse?.playing) this.setTimelapse(false);
                 this.filters.timeOfNight = parseFloat(e.target.value);
                 this.updateTimeDisplay(this.filters.timeOfNight);
                 
@@ -501,64 +376,6 @@ class EnhancedStarMap {
             });
         }
         
-        // Time-lapse
-        const playBtn = document.getElementById('time-play');
-        if (playBtn) playBtn.addEventListener('click', () => this.setTimelapse(!this.timelapse.playing));
-
-        // Remembered sky
-        const rememberBtn = document.getElementById('remember-sky');
-        if (rememberBtn) rememberBtn.addEventListener('click', () => this.rememberSky());
-        const forgetBtn = document.getElementById('forget-sky');
-        if (forgetBtn) forgetBtn.addEventListener('click', () => this.forgetSky());
-        const ghostToggle = document.getElementById('toggle-remembered');
-        if (ghostToggle) ghostToggle.addEventListener('click', () => {
-            this.displayOptions.showRemembered = !this.displayOptions.showRemembered;
-            this.updateMemoryUI();
-            this.saveState();
-        });
-
-        // Sky events: special events (previously unwired) + comet
-        const specialEventsBox = document.getElementById('show-special-events');
-        if (specialEventsBox) {
-            specialEventsBox.addEventListener('change', (e) => {
-                this.filters.showSpecialEvents = e.target.checked;
-                this.updateVisibleConstellations();
-                this.updateConstellationList();
-                this.saveState();
-            });
-        }
-        const cometBox = document.getElementById('comet-toggle');
-        if (cometBox) {
-            cometBox.addEventListener('change', (e) => {
-                this.filters.comet = e.target.checked;
-                this.saveState();
-            });
-        }
-
-        // Constellation search
-        const searchInput = document.getElementById('constellation-search');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.searchTerm = e.target.value;
-                this.updateConstellationList();
-            });
-        }
-
-        // Mobile drawer
-        const drawerToggle = document.getElementById('drawer-toggle');
-        const drawerScrim = document.getElementById('drawer-scrim');
-        const chartPanel = document.getElementById('control-panel');
-        const setDrawer = (open) => {
-            if (!chartPanel) return;
-            chartPanel.classList.toggle('drawer-open', open);
-            if (drawerScrim) drawerScrim.hidden = !open;
-            if (drawerToggle) drawerToggle.setAttribute('aria-expanded', String(open));
-        };
-        if (drawerToggle) drawerToggle.addEventListener('click', () =>
-            setDrawer(!chartPanel.classList.contains('drawer-open')));
-        if (drawerScrim) drawerScrim.addEventListener('click', () => setDrawer(false));
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setDrawer(false); });
-
         // Detail panel
         const closeDetailButton = document.getElementById('close-detail');
         if (closeDetailButton) {
@@ -1315,6 +1132,7 @@ generateShatteredStars(position, seed) {
         
         filtered = filter.bySeasonEnhanced(filtered, this.filters.season);
         filtered = filter.byEmotionalTriggers(filtered, this.filters.emotional);
+        filtered = filter.byTimeOfNight(filtered, this.filters.timeOfNight);
         
         if (this.filters.magicalIntensityMin > 0 || this.filters.magicalIntensityMax < 5) {
             filtered = filtered.filter(constellation => {
@@ -1330,24 +1148,15 @@ generateShatteredStars(position, seed) {
             );
         }
         
-        // Hour gating becomes a fade target rather than a hard cut, so stars
-        // rise and set instead of blinking. List/count/hit-testing still use
-        // the strictly-visible set.
-        const hourVisible = new Set(filter.byTimeOfNight(filtered, this.filters.timeOfNight).map(c => c.name));
-        
-        if (!this.timelapse?.playing) this._renderHours = this.filters.timeOfNight;
-        const renderHours = this._renderHours ?? this.filters.timeOfNight;
-        
-        this.renderPool = filtered.map(constellation => {
-            const timeAdjusted = this.getTimeAdjustedPosition(constellation, renderHours);
+        // Apply time-based position adjustments to all constellations
+        this.visibleConstellations = filtered.map(constellation => {
+            const timeAdjusted = this.getTimeAdjustedPosition(constellation, this.filters.timeOfNight);
             return {
                 ...constellation,
                 position: timeAdjusted.position,
-                stars: timeAdjusted.stars,
-                __timeVisible: hourVisible.has(constellation.name)
+                stars: timeAdjusted.stars
             };
         });
-        this.visibleConstellations = this.renderPool.filter(c => c.__timeVisible);
         
         this.applyEnhancedEmotionalEffects();
     }
@@ -1398,21 +1207,12 @@ generateShatteredStars(position, seed) {
         if (!listContainer) return;
         
         listContainer.innerHTML = '';
-
-        const term = (this.searchTerm || '').trim().toLowerCase();
-        const matches = this.visibleConstellations.filter(c =>
-            !term ||
-            c.name.toLowerCase().includes(term) ||
-            (c.alternateName || '').toLowerCase().includes(term));
-
-        matches.forEach(constellation => {
+        
+        this.visibleConstellations.forEach(constellation => {
             const item = this.createConstellationListItem(constellation);
             listContainer.appendChild(item);
         });
-
-        const empty = document.getElementById('list-empty');
-        if (empty) empty.hidden = !(term && matches.length === 0);
-
+        
         this.updateConstellationCount();
     }
     
@@ -1497,7 +1297,6 @@ updateStarCount() {
         let lastFpsTime = 0;
         
         const animate = (timestamp) => {
-            this.advanceTimelapse(timestamp);
             this.render(timestamp);
             
             frameCount++;
@@ -1523,10 +1322,7 @@ updateStarCount() {
         }
         
         this.renderEnhancedStars(timestamp);
-        this.renderMeteors(timestamp);
-        if (this.displayOptions.showRemembered && this.skyMemory) this.renderRememberedSky();
         this.renderEnhancedConstellations(timestamp);
-        if (this.filters.comet) this.renderComet(timestamp);
         
         if (timestamp - this.viewState.lastSaveTime > 30000) {
             this.saveState();
@@ -1580,10 +1376,6 @@ updateStarCount() {
         for (let i = 0; i < this.stars.length; i += step) {
             const star = this.stars[i];
             const screenPos = this.worldToScreen(star.x, star.y);
-            if (!this._reducedMotion) {
-                screenPos.x += Math.sin(timestamp * 0.00008 + i * 1.37) * (2 + (i % 3));
-                screenPos.y += Math.cos(timestamp * 0.00006 + i * 2.11) * (1.5 + (i % 2));
-            }
             
             if (this.isOnScreen(screenPos.x, screenPos.y)) {
                 const twinkleBase = Math.sin(timestamp * star.twinkleSpeed * 0.001 + star.twinkle) * 0.4 + 0.6;
@@ -1609,189 +1401,15 @@ updateStarCount() {
             }
         }
     }
-
-    renderMeteors(t) {
-        if (this._reducedMotion) return;
-        const rect = this.canvas.getBoundingClientRect();
-        const amb = this._ambient;
-        if (t > amb.nextMeteor) {
-            amb.nextMeteor = t + (this.filters.comet ? 2600 : 5200) + Math.random() * 7000;
-            const dir = Math.random() < 0.5 ? 1 : -1;
-            amb.meteors.push({
-                x: rect.width * (0.08 + Math.random() * 0.84),
-                y: rect.height * Math.random() * 0.4,
-                vx: dir * (4 + Math.random() * 5),
-                vy: 2.5 + Math.random() * 3,
-                maxLife: 550 + Math.random() * 550,
-                born: t
-            });
-        }
-        amb.meteors = amb.meteors.filter(m => t - m.born < m.maxLife);
-        for (const m of amb.meteors) {
-            const age = (t - m.born) / m.maxLife;
-            const fade = age < 0.2 ? age / 0.2 : 1 - (age - 0.2) / 0.8;
-            const px = m.x + m.vx * (t - m.born) / 16;
-            const py = m.y + m.vy * (t - m.born) / 16;
-            const tail = 3 + 9 * (1 - age);
-            const grad = this.ctx.createLinearGradient(px, py, px - m.vx * tail, py - m.vy * tail);
-            grad.addColorStop(0, `rgba(255,255,255,${0.9 * fade})`);
-            grad.addColorStop(0.35, `rgba(251,191,36,${0.5 * fade})`);
-            grad.addColorStop(1, 'rgba(139,92,246,0)');
-            this.ctx.strokeStyle = grad;
-            this.ctx.lineWidth = 1.6;
-            this.ctx.beginPath();
-            this.ctx.moveTo(px, py);
-            this.ctx.lineTo(px - m.vx * tail, py - m.vy * tail);
-            this.ctx.stroke();
-        }
-    }
-
-    renderComet(t) {
-        const rect = this.canvas.getBoundingClientRect();
-        const CYCLE = 70000, TRAVEL = 48000;
-        const phase = this._reducedMotion ? TRAVEL * 0.45 : (t % CYCLE);
-        if (phase > TRAVEL) return;
-        const p = phase / TRAVEL;
-        const x = rect.width * (-0.12 + 1.24 * p);
-        const y = rect.height * (0.14 + 0.30 * p - Math.sin(p * Math.PI) * 0.06);
-
-        // Faint sky wash around the comet
-        const wash = this.ctx.createRadialGradient(x, y, 0, x, y, rect.width * 0.42);
-        wash.addColorStop(0, 'rgba(110,231,183,0.10)');
-        wash.addColorStop(0.45, 'rgba(251,191,36,0.045)');
-        wash.addColorStop(1, 'rgba(0,0,0,0)');
-        this.ctx.fillStyle = wash;
-        this.ctx.fillRect(0, 0, rect.width, rect.height);
-
-        // Twin tails streaming back along the path (ion teal, dust gold)
-        const tx = -1, ty = -0.30, norm = Math.hypot(tx, ty);
-        const ux = tx / norm, uy = ty / norm;
-        const L = rect.width * 0.30;
-        const drawTail = (spreadX, spreadY, len, rgb, alpha, width) => {
-            const ex = x + ux * len + spreadX, ey = y + uy * len + spreadY;
-            const g = this.ctx.createLinearGradient(x, y, ex, ey);
-            g.addColorStop(0, `rgba(${rgb},${alpha})`);
-            g.addColorStop(1, `rgba(${rgb},0)`);
-            this.ctx.strokeStyle = g;
-            this.ctx.lineWidth = width;
-            this.ctx.lineCap = 'round';
-            this.ctx.beginPath();
-            this.ctx.moveTo(x, y);
-            this.ctx.quadraticCurveTo(x + ux * len * 0.5 + spreadX * 0.3, y + uy * len * 0.5 + spreadY * 0.3, ex, ey);
-            this.ctx.stroke();
-        };
-        drawTail(0, -L * 0.06, L, '110,231,183', 0.5, 7);
-        drawTail(0, -L * 0.12, L * 0.86, '110,231,183', 0.28, 12);
-        drawTail(0, L * 0.05, L * 0.62, '251,191,36', 0.45, 5);
-        drawTail(0, L * 0.10, L * 0.5, '251,191,36', 0.22, 9);
-
-        // Shed sparks along the tail
-        if (!this._reducedMotion) {
-            for (let k = 0; k < 12; k++) {
-                const sp = ((t * 0.00012) + k / 12) % 1;
-                const sx = x + ux * L * sp + Math.sin(t * 0.001 + k * 2.4) * 9 * sp;
-                const sy = y + uy * L * sp + Math.cos(t * 0.0013 + k * 1.9) * 9 * sp - L * 0.04 * sp;
-                const sa = (1 - sp) * (0.35 + 0.35 * Math.abs(Math.sin(t * 0.004 + k)));
-                this.ctx.fillStyle = `rgba(255,240,200,${sa})`;
-                this.ctx.beginPath();
-                this.ctx.arc(sx, sy, 1.1, 0, Math.PI * 2);
-                this.ctx.fill();
-            }
-        }
-
-        // Head: white core, gold corona, teal rim
-        const head = this.ctx.createRadialGradient(x, y, 0, x, y, 16);
-        head.addColorStop(0, 'rgba(255,255,255,0.95)');
-        head.addColorStop(0.3, 'rgba(255,235,180,0.75)');
-        head.addColorStop(0.7, 'rgba(110,231,183,0.3)');
-        head.addColorStop(1, 'rgba(110,231,183,0)');
-        this.ctx.fillStyle = head;
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, 16, 0, Math.PI * 2);
-        this.ctx.fill();
-        this.ctx.fillStyle = 'rgba(255,255,255,0.95)';
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, 2.6, 0, Math.PI * 2);
-        this.ctx.fill();
-    }
     
     renderEnhancedConstellations(timestamp) {
-        const dt = Math.min(100, timestamp - (this._fadeT ?? timestamp));
-        this._fadeT = timestamp;
-        this._fade = this._fade || {};
-        this._labels = [];
-
-        const pool = this.renderPool || this.visibleConstellations;
-        const sorted = [...pool].sort(
+        const sortedConstellations = [...this.visibleConstellations].sort(
             (a, b) => (a.magicalIntensity || 3) - (b.magicalIntensity || 3)
         );
-
-        const seen = new Set();
-        for (const constellation of sorted) {
-            seen.add(constellation.name);
-            const target = constellation.__timeVisible === false ? 0 : 1;
-            const cur = this._fade[constellation.name] ?? target;
-            let alpha = cur;
-            if (cur !== target) {
-                const rate = dt / (target > cur ? 600 : 900);
-                alpha = Math.max(0, Math.min(1, cur + Math.sign(target - cur) * rate));
-            }
-            this._fade[constellation.name] = alpha;
-            if (alpha <= 0.01) continue;
-            this._curFade = alpha;
-            this.ctx.save();
-            this.ctx.globalAlpha *= alpha;
+        
+        sortedConstellations.forEach(constellation => {
             this.renderEnhancedConstellation(constellation, timestamp);
-            this.ctx.restore();
-        }
-        for (const k of Object.keys(this._fade)) if (!seen.has(k)) delete this._fade[k];
-        this._curFade = 1;
-
-        this.renderLabels();
-    }
-
-    renderLabels() {
-        const labels = this._labels;
-        if (!labels || !labels.length) return;
-        labels.sort((a, b) => b.priority - a.priority);
-        const placed = [];
-        const collides = (r) => placed.some(p =>
-            r.x < p.x + p.w + 4 && r.x + r.w + 4 > p.x &&
-            r.y < p.y + p.h + 3 && r.y + r.h + 3 > p.y);
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.lineJoin = 'round';
-        for (const L of labels) {
-            this.ctx.font = `${L.fontSize}px "Cinzel", Georgia, serif`;
-            const w = this.ctx.measureText(L.name).width;
-            const h = L.fontSize + (L.alt ? L.fontSize * 0.6 + 8 : 0) + 6;
-            let ok = false;
-            for (const dy of [0, L.fontSize + 12, -(L.fontSize + 28), (L.fontSize + 12) * 2]) {
-                const r = { x: L.x - w / 2 - 5, y: L.y + dy - L.fontSize * 0.7, w: w + 10, h };
-                if (!collides(r)) { placed.push(r); L.y += dy; ok = true; break; }
-            }
-            if (!ok) continue; // too crowded here — the higher-priority names keep the space
-
-            if (L.highlighted) {
-                this.ctx.shadowColor = `rgba(${L.emotionalColor}, ${0.8 * L.alpha})`;
-                this.ctx.shadowBlur = 6;
-            }
-            this.ctx.strokeStyle = `rgba(8, 8, 22, ${0.85 * L.alpha})`;
-            this.ctx.lineWidth = 3.5;
-            this.ctx.strokeText(L.name, L.x, L.y);
-            this.ctx.fillStyle = L.highlighted
-                ? `rgba(${L.emotionalColor}, ${L.alpha})`
-                : `rgba(255, 255, 255, ${0.9 * L.alpha})`;
-            this.ctx.fillText(L.name, L.x, L.y);
-            if (L.alt) {
-                this.ctx.font = `${L.fontSize * 0.6}px "Cinzel", Georgia, serif`;
-                this.ctx.strokeText(L.alt, L.x, L.y + L.fontSize + 8);
-                this.ctx.fillStyle = `rgba(${L.highlighted ? L.emotionalColor : '255, 255, 255'}, ${0.7 * L.alpha})`;
-                this.ctx.fillText(L.alt, L.x, L.y + L.fontSize + 8);
-            }
-            this.ctx.shadowBlur = 0;
-        }
-        this._labels = [];
+        });
     }
     
     renderEnhancedConstellation(constellation, timestamp) {
@@ -1893,25 +1511,34 @@ updateStarCount() {
     }
     
     renderEnhancedConstellationName(constellation, isHighlighted, emotionalColor) {
-        // Labels are collected here and drawn in a single collision-aware pass
-        // (renderLabels) after all constellations, so names never sit on top of
-        // stars or each other.
         const centerPos = this.worldToScreen(constellation.position.x, constellation.position.y + 70);
-        if (!this.isOnScreen(centerPos.x, centerPos.y)) return;
-        const alpha = this._curFade ?? 1;
-        if (alpha < 0.25) return; // don't label stars that are mostly risen/set
-        this._labels.push({
-            name: constellation.name,
-            alt: (constellation.alternateName && this.viewState.zoom > 1.2)
-                ? `"${constellation.alternateName}"` : null,
-            x: centerPos.x,
-            y: centerPos.y,
-            fontSize: Math.max(10, 14 * this.viewState.zoom),
-            highlighted: isHighlighted,
-            emotionalColor,
-            alpha,
-            priority: (constellation.navigationValue || 0) * 2 + (constellation.magicalIntensity || 3)
-        });
+        
+        if (this.isOnScreen(centerPos.x, centerPos.y)) {
+            const fontSize = Math.max(10, 14 * this.viewState.zoom);
+            const color = isHighlighted ? `rgba(${emotionalColor}, 1)` : 'rgba(255, 255, 255, 0.9)';
+            
+            this.ctx.fillStyle = color;
+            this.ctx.font = `${fontSize}px "Cinzel", Georgia, serif`;
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            
+            if (isHighlighted) {
+                this.ctx.shadowColor = `rgba(${emotionalColor}, 0.8)`;
+                this.ctx.shadowBlur = 6;
+                this.ctx.shadowOffsetX = 0;
+                this.ctx.shadowOffsetY = 0;
+            }
+            
+            this.ctx.fillText(constellation.name, centerPos.x, centerPos.y);
+            
+            if (constellation.alternateName && this.viewState.zoom > 1.2) {
+                this.ctx.font = `${fontSize * 0.6}px "Cinzel", Georgia, serif`;
+                this.ctx.fillStyle = `rgba(${isHighlighted ? emotionalColor : '255, 255, 255'}, 0.7)`;
+                this.ctx.fillText(`"${constellation.alternateName}"`, centerPos.x, centerPos.y + fontSize + 8);
+            }
+            
+            this.ctx.shadowBlur = 0;
+        }
     }
     
     isConstellationHighlighted(constellation) {
@@ -2092,69 +1719,6 @@ updateStarCount() {
         const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
         this.viewState.zoom = Math.max(0.1, Math.min(4, this.viewState.zoom * zoomFactor));
         this.saveState();
-    }
-
-    _touchDistance(e) {
-        const [a, b] = [e.touches[0], e.touches[1]];
-        return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
-    }
-
-    handleTouchStart(e) {
-        if (e.touches.length === 1) {
-            const t = e.touches[0];
-            this.viewState.isDragging = true;
-            this.viewState.lastMouseX = t.clientX;
-            this.viewState.lastMouseY = t.clientY;
-            this._touchMoved = false;
-            this._pinchDist = null;
-        } else if (e.touches.length === 2) {
-            e.preventDefault();
-            this.viewState.isDragging = false;
-            this._pinchDist = this._touchDistance(e);
-        }
-    }
-
-    handleTouchMove(e) {
-        if (e.touches.length === 1 && this.viewState.isDragging) {
-            e.preventDefault();
-            const t = e.touches[0];
-            const deltaX = t.clientX - this.viewState.lastMouseX;
-            const deltaY = t.clientY - this.viewState.lastMouseY;
-            if (Math.abs(deltaX) + Math.abs(deltaY) > 5) this._touchMoved = true;
-            this.viewState.offsetX += deltaX;
-            this.viewState.offsetY += deltaY;
-            this.viewState.lastMouseX = t.clientX;
-            this.viewState.lastMouseY = t.clientY;
-        } else if (e.touches.length === 2 && this._pinchDist) {
-            e.preventDefault();
-            const d = this._touchDistance(e);
-            const factor = d / this._pinchDist;
-            this.viewState.zoom = Math.max(0.1, Math.min(4, this.viewState.zoom * factor));
-            this._pinchDist = d;
-        }
-    }
-
-    handleTouchEnd(e) {
-        if (e.touches.length === 1) {
-            // dropped from pinch to single finger: re-anchor the pan
-            const t = e.touches[0];
-            this.viewState.isDragging = true;
-            this.viewState.lastMouseX = t.clientX;
-            this.viewState.lastMouseY = t.clientY;
-            this._pinchDist = null;
-            return;
-        }
-        const wasDrag = this.viewState.isDragging;
-        this.viewState.isDragging = false;
-        this._pinchDist = null;
-        this.saveState();
-        // A still tap opens the constellation under the finger
-        if (wasDrag && !this._touchMoved && e.changedTouches.length === 1) {
-            const t = e.changedTouches[0];
-            const rect = this.canvas.getBoundingClientRect();
-            const hit = this.getConstellationAtPoint(t.clientX - rect.left, t.clientY - rect.top);
-            if (hit) this.showConstellationDetail(hit);
-        }
     }
     
     handleCanvasClick(e) {

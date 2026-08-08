@@ -106,3 +106,23 @@ untouched except for three additive features (search, drawer, touch). The
   hour (or play the time-lapse over it) and the differences are visible:
   anchors sit dead still on their ghosts, wanderers drift off theirs. The
   memory survives the session (saved with your other state) until you Forget.
+
+---
+
+# Smoothing pass: motion & labels
+
+- **No more midnight snap.** The renderer now runs on a continuous, unwrapped
+  clock during time-lapse — rotation math no longer jumps when the slider wraps
+  23→0. Manual slider drags still jump to where you point (that's direct
+  manipulation, not a glitch).
+- **Stars rise and set instead of blinking.** Hour-gated constellations
+  (byTimeOfNight) now fade in over ~0.6s and out over ~0.9s rather than popping.
+  The sidebar list, count, and click-targets still use the strict truth — a
+  mostly-set constellation can't be clicked, only seen going.
+- **Labels stopped fighting.** Names are collected and drawn in one
+  collision-aware pass after all constellations: sorted by priority (navigation
+  value + magical intensity), each label tries four positions (anchor, below,
+  above, further below) and sits out if the sky is too crowded there — the
+  important names always keep their spot. Every label now has a thin dark halo
+  so it stays readable across stars, and labels for constellations that are
+  mostly risen/set don't draw at all.
