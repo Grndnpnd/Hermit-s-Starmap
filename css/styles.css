@@ -1030,3 +1030,20 @@ h1, h2, h3, .brand h1, .plate > summary, .detail-name {
     .plate-star, .chart-detail, .chart-panel, .chip span, .btn { transition: none; }
     .loading-star, .mystical-pulse { animation: none; }
 }
+
+/* Phase 4: time-lapse + remembered sky */
+.time-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.btn-play {
+    width: 30px; height: 30px; flex: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%; cursor: pointer; font-size: 0.8rem;
+    background: rgba(45,45,90,0.7); color: #d8cfff;
+    border: 1px solid rgba(139,92,246,0.4);
+    transition: all 0.18s ease;
+}
+.btn-play:hover { border-color: var(--mystical-gold); color: #fff; }
+.btn-play[aria-pressed="true"] { background: rgba(251,191,36,0.18); border-color: var(--mystical-gold); color: var(--mystical-gold); box-shadow: 0 0 10px rgba(251,191,36,0.3); }
+.btn-play:focus-visible { outline: 2px solid var(--mystical-gold); outline-offset: 1px; }
+.sky-memory { margin-top: 13px; border-top: 1px dashed rgba(139,92,246,0.28); padding-top: 11px; }
+.sky-memory .zoom-row { margin: 7px 0 0; }
+#memory-caption { margin-bottom: 0; color: #b7a8e8; }

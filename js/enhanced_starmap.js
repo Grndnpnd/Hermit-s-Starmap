@@ -48,6 +48,11 @@ class EnhancedStarMap {
             comet: false
         };
 
+        // Time-lapse night + remembered sky (phase 4)
+        this.timelapse = { playing: false, last: 0, speed: 1.2 }; // game-hours per real second
+        this.skyMemory = null;
+        this.displayOptions.showRemembered = false;
+
         // Ambient sky (shooting stars, comet)
         this._ambient = { meteors: [], nextMeteor: 0 };
         this._reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -81,6 +86,7 @@ class EnhancedStarMap {
             this.updateConstellationList();
             this.updateSeasonSelector();
             this.startAnimation();
+            if (this._autoplay && !this._reducedMotion) this.setTimelapse(true);
             this.hideLoadingOverlay();
             
             // Setup auto-save
@@ -106,6 +112,7 @@ class EnhancedStarMap {
         }
         if (p.has('se')) this.filters.showSpecialEvents = p.get('se') !== '0';
         if (p.has('comet')) this.filters.comet = p.get('comet') === '1';
+        this._autoplay = p.get('play') === '1';
         if (p.has('names')) this.displayOptions.showNames = p.get('names') !== '0';
         if (p.has('lines')) this.displayOptions.showLines = p.get('lines') !== '0';
         if (p.has('grid')) this.displayOptions.showGrid = p.get('grid') === '1';
@@ -123,11 +130,99 @@ class EnhancedStarMap {
         p.set('t', String(this.filters.timeOfNight));
         p.set('se', this.filters.showSpecialEvents ? '1' : '0');
         if (this.filters.comet) p.set('comet', '1');
+        if (this.timelapse?.playing) p.set('play', '1');
         p.set('names', this.displayOptions.showNames ? '1' : '0');
         p.set('lines', this.displayOptions.showLines ? '1' : '0');
         p.set('grid', this.displayOptions.showGrid ? '1' : '0');
         if (this.filters.emotional.length) p.set('e', this.filters.emotional.join(','));
         return `${window.location.origin}${window.location.pathname}?${p.toString()}`;
+    }
+
+    setTimelapse(on) {
+        this.timelapse.playing = on;
+        this.timelapse.last = 0;
+        const btn = document.getElementById('time-play');
+        if (btn) {
+            btn.textContent = on ? '⏸' : '▶';
+            btn.setAttribute('aria-pressed', String(on));
+            btn.setAttribute('aria-label', on ? 'Pause the time-lapse' : 'Play the night as a time-lapse');
+        }
+        if (!on) this.saveState();
+    }
+
+    advanceTimelapse(t) {
+        if (!this.timelapse.playing) return;
+        if (!this.timelapse.last) { this.timelapse.last = t; return; }
+        const dt = (t - this.timelapse.last) / 1000;
+        this.timelapse.last = t;
+        const prevHour = Math.floor(this.filters.timeOfNight);
+        this.filters.timeOfNight = (this.filters.timeOfNight + dt * this.timelapse.speed) % 24;
+        const slider = document.getElementById('time-slider');
+        if (slider) slider.value = this.filters.timeOfNight;
+        this.updateTimeDisplay(this.filters.timeOfNight);
+        this.updateVisibleConstellations();
+        if (Math.floor(this.filters.timeOfNight) !== prevHour) this.updateConstellationList();
+    }
+
+    rememberSky() {
+        const seasonText = document.getElementById('season-select')?.selectedOptions?.[0]?.textContent || this.filters.season;
+        const timeText = document.getElementById('time-display')?.textContent || '';
+        this.skyMemory = {
+            label: `${seasonText} · ${timeText}`,
+            cons: this.visibleConstellations.map(c => ({
+                name: c.name,
+                stars: (c.stars || []).map(s => ({ x: s.x, y: s.y }))
+            }))
+        };
+        this.displayOptions.showRemembered = true;
+        this.updateMemoryUI();
+        this.saveState();
+    }
+
+    forgetSky() {
+        this.skyMemory = null;
+        this.displayOptions.showRemembered = false;
+        this.updateMemoryUI();
+        this.saveState();
+    }
+
+    updateMemoryUI() {
+        const row = document.getElementById('memory-row');
+        const cap = document.getElementById('memory-caption');
+        const tog = document.getElementById('toggle-remembered');
+        if (row) row.hidden = !this.skyMemory;
+        if (cap && this.skyMemory) cap.textContent = `Remembering: ${this.skyMemory.label}`;
+        if (tog) {
+            const on = !!this.displayOptions.showRemembered;
+            tog.setAttribute('aria-pressed', String(on));
+            tog.textContent = on ? 'Hide remembered sky' : 'Show remembered sky';
+        }
+    }
+
+    renderRememberedSky() {
+        this.ctx.save();
+        this.ctx.setLineDash([5, 6]);
+        for (const c of this.skyMemory.cons) {
+            if (!c.stars || !c.stars.length) continue;
+            if (c.stars.length > 1) {
+                this.ctx.strokeStyle = 'rgba(139,92,246,0.32)';
+                this.ctx.lineWidth = 1;
+                this.ctx.beginPath();
+                c.stars.forEach((s, i) => {
+                    const p = this.worldToScreen(s.x, s.y);
+                    if (i === 0) this.ctx.moveTo(p.x, p.y); else this.ctx.lineTo(p.x, p.y);
+                });
+                this.ctx.stroke();
+            }
+            this.ctx.strokeStyle = 'rgba(202,191,255,0.4)';
+            for (const s of c.stars) {
+                const p = this.worldToScreen(s.x, s.y);
+                this.ctx.beginPath();
+                this.ctx.arc(p.x, p.y, 2.4 * this.viewState.zoom, 0, Math.PI * 2);
+                this.ctx.stroke();
+            }
+        }
+        this.ctx.restore();
     }
 
     loadSavedState() {
@@ -141,6 +236,9 @@ class EnhancedStarMap {
             
             // Restore display options
             Object.assign(this.displayOptions, savedState.displayOptions || {});
+
+            // Restore remembered sky
+            this.skyMemory = savedState.skyMemory || null;
             
             // Update UI to match loaded state
             this.updateUIFromState();
@@ -173,6 +271,9 @@ class EnhancedStarMap {
         if (specialEvents) specialEvents.checked = this.filters.showSpecialEvents;
         const cometToggle = document.getElementById('comet-toggle');
         if (cometToggle) cometToggle.checked = this.filters.comet;
+
+        // Remembered sky controls
+        this.updateMemoryUI();
 
         // Update display toggle buttons
         this.updateDisplayToggleStates();
@@ -211,7 +312,8 @@ class EnhancedStarMap {
             window.EnhancedConstellationData.StarMapState.save({
                 viewState: this.viewState,
                 filters: this.filters,
-                displayOptions: this.displayOptions
+                displayOptions: this.displayOptions,
+                skyMemory: this.skyMemory
             });
             this.viewState.lastSaveTime = Date.now();
         }
@@ -298,6 +400,7 @@ class EnhancedStarMap {
             });
             
             timeSlider.addEventListener('input', (e) => {
+                if (this.timelapse?.playing) this.setTimelapse(false);
                 this.filters.timeOfNight = parseFloat(e.target.value);
                 this.updateTimeDisplay(this.filters.timeOfNight);
                 
@@ -396,6 +499,22 @@ class EnhancedStarMap {
             });
         }
         
+        // Time-lapse
+        const playBtn = document.getElementById('time-play');
+        if (playBtn) playBtn.addEventListener('click', () => this.setTimelapse(!this.timelapse.playing));
+
+        // Remembered sky
+        const rememberBtn = document.getElementById('remember-sky');
+        if (rememberBtn) rememberBtn.addEventListener('click', () => this.rememberSky());
+        const forgetBtn = document.getElementById('forget-sky');
+        if (forgetBtn) forgetBtn.addEventListener('click', () => this.forgetSky());
+        const ghostToggle = document.getElementById('toggle-remembered');
+        if (ghostToggle) ghostToggle.addEventListener('click', () => {
+            this.displayOptions.showRemembered = !this.displayOptions.showRemembered;
+            this.updateMemoryUI();
+            this.saveState();
+        });
+
         // Sky events: special events (previously unwired) + comet
         const specialEventsBox = document.getElementById('show-special-events');
         if (specialEventsBox) {
@@ -1368,6 +1487,7 @@ updateStarCount() {
         let lastFpsTime = 0;
         
         const animate = (timestamp) => {
+            this.advanceTimelapse(timestamp);
             this.render(timestamp);
             
             frameCount++;
@@ -1394,6 +1514,7 @@ updateStarCount() {
         
         this.renderEnhancedStars(timestamp);
         this.renderMeteors(timestamp);
+        if (this.displayOptions.showRemembered && this.skyMemory) this.renderRememberedSky();
         this.renderEnhancedConstellations(timestamp);
         if (this.filters.comet) this.renderComet(timestamp);
         

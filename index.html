@@ -39,7 +39,7 @@
 
                     <label class="field-label" for="time-slider">Time of night</label>
                     <input type="range" id="time-slider" min="0" max="23" value="21" step="0.5" class="slider" aria-describedby="time-display">
-                    <div class="time-row"><span id="time-display">9:00 PM</span></div>
+                    <div class="time-row"><button id="time-play" class="btn-play" aria-pressed="false" aria-label="Play the night as a time-lapse">▶</button><span id="time-display">9:00 PM</span></div>
 
                     <label class="check-row">
                         <input type="checkbox" id="show-special-events" checked>
@@ -49,6 +49,17 @@
                         <input type="checkbox" id="comet-toggle">
                         <span>🌠 Comet in the sky</span>
                     </label>
+
+                    <div class="sky-memory">
+                        <button id="remember-sky" class="btn">🌙 Remember this sky</button>
+                        <div id="memory-row" hidden>
+                            <p class="field-hint" id="memory-caption"></p>
+                            <div class="zoom-row">
+                                <button id="toggle-remembered" class="btn btn-toggle" aria-pressed="false">Show remembered sky</button>
+                                <button id="forget-sky" class="btn">Forget</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </details>
 
@@ -201,6 +212,8 @@
                             <li><strong>Magical intensity:</strong> ● marks each constellation's power</li>
                             <li><strong>Navigation value:</strong> 🧭 marks reliable wayfinding stars</li>
                             <li><strong>Anchors:</strong> ⚓ stars never move, whatever the hour</li>
+                            <li><strong>Time-lapse:</strong> press ▶ by the clock and the whole night wheels past</li>
+                            <li><strong>Remember this sky:</strong> pin tonight's stars as a faint ghost, then change the hour and watch what wanders</li>
                         </ul>
                         <h3>⌨️ Keyboard</h3>
                         <ul>

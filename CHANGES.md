@@ -89,3 +89,20 @@ Every element ID, `name="emotional-filter"`, `data-toggle` contract, and the
 `translate-x-full`/`hidden` panel mechanics are preserved — the engine JS is
 untouched except for three additive features (search, drawer, touch). The
 "Lore & Usage" detail section was dropped: no code ever populated it.
+
+---
+
+# Phase 4: the night in motion
+
+- **Time-lapse (▶ by the clock):** press play and the whole night wheels past —
+  the slider and clock advance (~1.2 game-hours per second), constellations
+  rotate, wanderers drift, hour-gated stars rise and set live. Dragging the
+  slider pauses playback. `?play=1` in a shared link autoplays — set a comet
+  solstice night with `?s=winter&t=20&comet=1&play=1` on a TV behind the table
+  and let it run. Reduced-motion clients never autoplay.
+- **Remember this sky (🌙, under Tonight's Sky):** pins the current sky as a
+  memory. A "Show remembered sky" toggle draws it as a faint dashed ghost —
+  hollow violet stars and dotted lines — beneath tonight's stars. Change the
+  hour (or play the time-lapse over it) and the differences are visible:
+  anchors sit dead still on their ghosts, wanderers drift off theirs. The
+  memory survives the session (saved with your other state) until you Forget.

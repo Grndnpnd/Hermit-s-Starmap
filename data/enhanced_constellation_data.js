@@ -975,6 +975,7 @@ const StarMapState = {
             viewState: state.viewState,
             filters: state.filters,
             displayOptions: state.displayOptions,
+            skyMemory: state.skyMemory || null,
             timestamp: Date.now()
         };
         sessionStorage.setItem('starmap_state', JSON.stringify(stateData));
