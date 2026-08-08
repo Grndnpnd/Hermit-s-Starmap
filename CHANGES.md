@@ -209,3 +209,19 @@ multipliers — uniform, and the "chaotic" profile was high-frequency jitter
   The module's screen aurora got the same treatment (stronger pink, new magenta
   ribbon) in Frostfey Tundra v1.12.0, which also swaps its overlay comet to the
   same artwork.
+
+---
+
+# Hotfix: comet/aurora links crashed on load
+
+`startAnimation()` invoked the first frame with no timestamp. With `comet=1`
+or `aurora=1` in the URL, that undefined time became NaN comet coordinates /
+NaN gradient alphas on frame one — and real canvases throw on non-finite
+gradient args and unparseable colors, landing in init's catch and showing the
+"Failed to load enhanced constellation data" card. Toggling the same events by
+checkbox never hit it (later frames always have real timestamps), which is why
+every in-page test passed while shared links died.
+
+Fixed twice over: the first frame now receives `performance.now()`, and
+`render()` sanitizes any non-finite timestamp defensively. Verified against a
+strict harness that reproduces real-canvas throwing semantics.

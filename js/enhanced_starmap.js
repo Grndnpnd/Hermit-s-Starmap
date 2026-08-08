@@ -1503,10 +1503,11 @@ updateStarCount() {
             
             this.animationId = requestAnimationFrame(animate);
         };
-        animate();
+        animate(performance.now());
     }
     
     render(timestamp) {
+        if (!Number.isFinite(timestamp)) timestamp = performance.now();
         const rect = this.canvas.getBoundingClientRect();
         this.ctx.clearRect(0, 0, rect.width, rect.height);
         
