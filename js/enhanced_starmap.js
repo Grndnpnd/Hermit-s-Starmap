@@ -58,6 +58,7 @@ class EnhancedStarMap {
 
         // Ambient sky (shooting stars, comet)
         this._ambient = { meteors: [], nextMeteor: 0 };
+        this._cometTouched = new Map();
         this._reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
         
         // Constellation search (UI overhaul)
@@ -626,59 +627,71 @@ class EnhancedStarMap {
         });
     }
     
-    // Movement system v2: one shared sky-wheel plus a distinct voice per type.
-    // Everything is continuous in (unwrapped) hours — no jumps, ever.
+    // Movement system v3: every constellation owns a FIXED closed path around
+    // its home station — a tilted ellipse (plus type-specific epicycles whose
+    // rates are integer multiples of the orbit rate, so the whole path repeats
+    // exactly). Purely periodic in continuous hours: it loops with no seam and
+    // never wanders off-station, so navigation canon (directions, bearings)
+    // holds forever. Layout rotation is a slow continuous crawl.
     getTimeBasedOffset(constellation, h) {
         const profile = window.EnhancedConstellationData?.getMovementProfile(constellation.name) || {
             orbitalSpeed: 1.0, rotationSpeed: 1.0, randomFactor: 0.25, type: "default"
         };
         if (profile.type === "anchor") return { x: 0, y: 0, rotation: 0, spread: 1, perStar: null };
 
-        const seed = constellation.id * 7.68;
-        const base = constellation.basePosition || constellation.position;
+        const id = constellation.id || 1;
+        const seed = id * 7.68;
+        // Deterministic per-constellation constants: same star, same path, every session
+        const rng = k => { const v = Math.sin(seed * 12.9898 + k * 78.233) * 43758.5453; return v - Math.floor(v); };
+        const DEG = Math.PI / 180;
+        const amp = profile.orbitalSpeed || 1;
 
-        // THE SKY WHEEL: every constellation turns about the celestial pole
-        // (up where the Frozen Throne holds court), each at its own radius and
-        // bearing — a rigid, stately glide rather than a spin-in-place.
-        const POLE = { x: 0, y: -560 };
-        const theta = (h * 1.05 * (profile.rotationSpeed || 1)) * (Math.PI / 180);
-        const relX = base.x - POLE.x, relY = base.y - POLE.y;
-        const cosT = Math.cos(theta), sinT = Math.sin(theta);
-        let x = (POLE.x + relX * cosT - relY * sinT) - base.x;
-        let y = (POLE.y + relX * sinT + relY * cosT) - base.y;
-        let rotation = theta;
+        const P = 10 + rng(1) * 8;                 // orbit period in game-hours
+        const w = (Math.PI * 2) / P;
+        const dir = rng(2) < 0.5 ? 1 : -1;         // some go widdershins
+        const A = amp * (10 + rng(3) * 14);
+        const B = amp * (7 + rng(4) * 11);
+        const tilt = rng(5) * Math.PI;
+        const ph = rng(6) * Math.PI * 2;
+        const ex = Math.cos(w * h * dir + ph) * A;
+        const ey = Math.sin(w * h * dir + ph) * B;
+        let x = ex * Math.cos(tilt) - ey * Math.sin(tilt);
+        let y = ex * Math.sin(tilt) + ey * Math.cos(tilt);
+        let rotation = h * 0.9 * (profile.rotationSpeed || 1) * DEG * 0.7; // slow continuous crawl
         let spread = 1;
         let perStar = null;
 
-        const amp = profile.orbitalSpeed || 1;
         switch (profile.type) {
             case "seasonal":
-                // Breathes: the stars ease apart and together like a slow bloom
-                spread = 1 + 0.06 * Math.sin(h * (Math.PI * 2 / 6.3) + seed);
+                // Breathes at twice the orbit rate — closes with the orbit
+                spread = 1 + 0.06 * Math.sin(w * 2 * h + seed);
                 break;
-            case "wandering":
-                // Meanders off the wheel-path and drifts back on two slow tides
-                x += amp * (20 * Math.sin(h * 1.8 + seed) + 11 * Math.sin(h * 0.52 + seed * 2.2));
-                y += amp * (16 * Math.sin(h * 1.15 + seed * 1.3) + 9 * Math.cos(h * 0.43 + seed));
+            case "wandering": {
+                // Epicycle at 3× the orbit rate: a spirograph crawl, still closed
+                const e = amp * (9 + rng(7) * 8);
+                x += e * Math.cos(w * 3 * h * dir + seed);
+                y += e * Math.sin(w * 3 * h * dir + seed * 1.3);
                 break;
+            }
             case "mystical":
-                // Hangs and sways like something underwater, with a slow shimmer
-                x += amp * 14 * Math.sin(h * 0.9 + seed);
-                y += amp * 14 * Math.cos(h * 0.65 + seed * 1.7);
-                rotation += 0.07 * Math.sin(h * 2.7 + seed);
+                // A 1:2 Lissajous bow over the ellipse, with orientation shimmer
+                y += amp * 8 * Math.sin(w * 2 * h + seed * 1.7);
+                rotation += 0.07 * Math.sin(w * 5 * h + seed);
                 break;
-            case "chaotic":
-                // Smooth layered noise: unpredictable roaming, no discontinuities
-                x += amp * (20 * Math.sin(h * 0.83 + seed) + 10 * Math.sin(h * 2.19 + seed * 2.3) + 5 * Math.sin(h * 5.01 + seed * 4.1));
-                y += amp * (20 * Math.sin(h * 0.71 + seed * 1.6) + 10 * Math.sin(h * 1.93 + seed * 3.1) + 5 * Math.cos(h * 4.47 + seed * 2.7));
-                rotation += 0.10 * Math.sin(h * 1.31 + seed);
-                // The fragments themselves drift: each star slides on its own
-                // smooth path, so a broken trail keeps re-breaking differently
+            case "chaotic": {
+                // Stacked epicycles at 3× and 7×: roams its whole neighbourhood,
+                // repeats exactly once per orbit, smooth everywhere
+                const e1 = amp * (10 + rng(7) * 8), e2 = amp * (5 + rng(8) * 5);
+                x += e1 * Math.cos(w * 3 * h * dir + seed * 2.1) + e2 * Math.sin(w * 7 * h + seed * 4.2);
+                y += e1 * Math.sin(w * 3 * h * dir + seed * 1.6) + e2 * Math.cos(w * 7 * h + seed * 3.3);
+                rotation += 0.09 * Math.sin(w * 4 * h + seed);
+                // The fragments drift on their own closed sub-paths
                 perStar = (i) => ({
-                    dx: 6 * Math.sin(h * 1.9 + seed + i * 2.7) + 3 * Math.sin(h * 4.3 + i * 1.3),
-                    dy: 6 * Math.cos(h * 1.4 + seed * 1.3 + i * 1.9) + 3 * Math.cos(h * 3.7 + i * 2.1)
+                    dx: 5 * Math.sin(w * 5 * h + seed + i * 2.7) + 3 * Math.sin(w * 11 * h + i * 1.3),
+                    dy: 5 * Math.cos(w * 4 * h + seed * 1.3 + i * 1.9) + 3 * Math.cos(w * 9 * h + i * 2.1)
                 });
                 break;
+            }
         }
         return { x, y, rotation, spread, perStar };
     }
@@ -1572,12 +1585,15 @@ updateStarCount() {
                 const twinkleBase = Math.sin(timestamp * star.twinkleSpeed * 0.001 + star.twinkle) * 0.4 + 0.6;
                 const alpha = star.brightness * twinkleBase;
                 
-                this.ctx.fillStyle = `rgba(${star.color}, ${alpha})`;
+                const cometKissed = star.cometUntil && star.cometUntil > timestamp;
+                this.ctx.fillStyle = cometKissed
+                    ? `rgba(170,235,255, ${Math.min(1, alpha + 0.3)})`
+                    : `rgba(${star.color}, ${alpha})`;
                 this.ctx.beginPath();
                 this.ctx.arc(
                     screenPos.x, 
                     screenPos.y, 
-                    star.size * this.viewState.zoom, 
+                    star.size * this.viewState.zoom * (cometKissed ? 1.5 : 1), 
                     0, 
                     Math.PI * 2
                 );
@@ -1654,72 +1670,92 @@ updateStarCount() {
     }
 
     renderComet(t) {
-        const rect = this.canvas.getBoundingClientRect();
-        const CYCLE = 70000, TRAVEL = 48000;
-        const phase = this._reducedMotion ? TRAVEL * 0.45 : (t % CYCLE);
+        if (!this._cometImg) {
+            this._cometImg = new Image();
+            this._cometImg.src = './assets/comet.webp';
+        }
+        const CYCLE = 80000, TRAVEL = 52000;
+        const cycleIdx = Math.floor(t / CYCLE);
+        const phase = this._reducedMotion ? TRAVEL * 0.45 : t % CYCLE;
         if (phase > TRAVEL) return;
         const p = phase / TRAVEL;
-        const x = rect.width * (-0.12 + 1.24 * p);
-        const y = rect.height * (0.14 + 0.30 * p - Math.sin(p * Math.PI) * 0.06);
 
-        // Faint sky wash around the comet
-        const wash = this.ctx.createRadialGradient(x, y, 0, x, y, rect.width * 0.42);
-        wash.addColorStop(0, 'rgba(110,231,183,0.10)');
-        wash.addColorStop(0.45, 'rgba(251,191,36,0.045)');
+        // A random FIXED path per pass, in WORLD space inside the star field —
+        // it pans and zooms with the sky instead of floating over it.
+        const r = k => { const v = Math.sin(cycleIdx * 127.1 + k * 311.7) * 43758.5453; return v - Math.floor(v); };
+        const R = 760;
+        const angIn = r(1) * Math.PI * 2;
+        const angOut = angIn + Math.PI + (r(2) - 0.5) * 1.1;
+        const x0 = Math.cos(angIn) * R, y0 = Math.sin(angIn) * R * 0.75;
+        const x1 = Math.cos(angOut) * R, y1 = Math.sin(angOut) * R * 0.75;
+        const mx = (x0 + x1) / 2 + (r(3) - 0.5) * 420;
+        const my = (y0 + y1) / 2 + (r(4) - 0.5) * 320;
+        const q = (a, b, c, u) => (1 - u) * (1 - u) * a + 2 * (1 - u) * u * b + u * u * c;
+        const dq = (a, b, c, u) => 2 * (1 - u) * (b - a) + 2 * u * (c - b);
+        const wx = q(x0, mx, x1, p), wy = q(y0, my, y1, p);
+        const heading = Math.atan2(dq(y0, my, y1, p), dq(x0, mx, x1, p));
+
+        // Stars the comet crosses turn comet-blue for 30 seconds
+        const pool = this.renderPool || this.visibleConstellations || [];
+        for (const c of pool) {
+            const stars = c.stars || [];
+            for (let i = 0; i < stars.length; i++) {
+                if (Math.abs(stars[i].x - wx) < 30 && Math.abs(stars[i].y - wy) < 30)
+                    this._cometTouched.set(`${c.name}:${i}`, t + 30000);
+            }
+        }
+        for (const st of this.stars) {
+            if (Math.abs(st.x - wx) < 24 && Math.abs(st.y - wy) < 24) st.cometUntil = t + 30000;
+        }
+        if ((t | 0) % 5000 < 20) for (const [k, exp] of this._cometTouched) if (exp < t) this._cometTouched.delete(k);
+
+        const s = this.worldToScreen(wx, wy);
+        const rect = this.canvas.getBoundingClientRect();
+        const zoom = this.viewState.zoom;
+
+        // Sky wash follows the comet
+        const wash = this.ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, rect.width * 0.35 * Math.max(0.5, zoom));
+        wash.addColorStop(0, 'rgba(160,220,255,0.10)');
+        wash.addColorStop(0.5, 'rgba(110,180,255,0.04)');
         wash.addColorStop(1, 'rgba(0,0,0,0)');
         this.ctx.fillStyle = wash;
         this.ctx.fillRect(0, 0, rect.width, rect.height);
 
-        // Twin tails streaming back along the path (ion teal, dust gold)
-        const tx = -1, ty = -0.30, norm = Math.hypot(tx, ty);
-        const ux = tx / norm, uy = ty / norm;
-        const L = rect.width * 0.30;
-        const drawTail = (spreadX, spreadY, len, rgb, alpha, width) => {
-            const ex = x + ux * len + spreadX, ey = y + uy * len + spreadY;
-            const g = this.ctx.createLinearGradient(x, y, ex, ey);
-            g.addColorStop(0, `rgba(${rgb},${alpha})`);
-            g.addColorStop(1, `rgba(${rgb},0)`);
-            this.ctx.strokeStyle = g;
-            this.ctx.lineWidth = width;
-            this.ctx.lineCap = 'round';
+        // The comet itself: James's artwork, rotated to its heading, glowing
+        const IMG_ANGLE = 2.436; // direction the artwork's head points
+        if (this._cometImg.complete && this._cometImg.naturalWidth) {
+            const wpx = 300 * zoom;
+            const hpx = wpx * (this._cometImg.naturalHeight / this._cometImg.naturalWidth);
+            this.ctx.save();
+            this.ctx.translate(s.x, s.y);
+            this.ctx.rotate(heading - IMG_ANGLE);
+            this.ctx.globalCompositeOperation = 'screen';
+            this.ctx.drawImage(this._cometImg, -wpx * 0.20, -hpx * 0.80, wpx, hpx); // head sits on the path
+            this.ctx.restore();
+        } else {
+            const head = this.ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, 14 * zoom);
+            head.addColorStop(0, 'rgba(255,255,255,0.95)');
+            head.addColorStop(1, 'rgba(160,220,255,0)');
+            this.ctx.fillStyle = head;
             this.ctx.beginPath();
-            this.ctx.moveTo(x, y);
-            this.ctx.quadraticCurveTo(x + ux * len * 0.5 + spreadX * 0.3, y + uy * len * 0.5 + spreadY * 0.3, ex, ey);
-            this.ctx.stroke();
-        };
-        drawTail(0, -L * 0.06, L, '110,231,183', 0.5, 7);
-        drawTail(0, -L * 0.12, L * 0.86, '110,231,183', 0.28, 12);
-        drawTail(0, L * 0.05, L * 0.62, '251,191,36', 0.45, 5);
-        drawTail(0, L * 0.10, L * 0.5, '251,191,36', 0.22, 9);
+            this.ctx.arc(s.x, s.y, 14 * zoom, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
 
-        // Shed sparks along the tail
+        // Sparks shed back along the trail
         if (!this._reducedMotion) {
-            for (let k = 0; k < 12; k++) {
-                const sp = ((t * 0.00012) + k / 12) % 1;
-                const sx = x + ux * L * sp + Math.sin(t * 0.001 + k * 2.4) * 9 * sp;
-                const sy = y + uy * L * sp + Math.cos(t * 0.0013 + k * 1.9) * 9 * sp - L * 0.04 * sp;
-                const sa = (1 - sp) * (0.35 + 0.35 * Math.abs(Math.sin(t * 0.004 + k)));
-                this.ctx.fillStyle = `rgba(255,240,200,${sa})`;
+            const bx = -Math.cos(heading), by = -Math.sin(heading);
+            const L = 210 * zoom;
+            for (let k = 0; k < 10; k++) {
+                const sp = ((t * 0.00012) + k / 10) % 1;
+                const sx = s.x + bx * L * sp + Math.sin(t * 0.001 + k * 2.4) * 8 * sp;
+                const sy = s.y + by * L * sp + Math.cos(t * 0.0013 + k * 1.9) * 8 * sp;
+                this.ctx.fillStyle = `rgba(210,240,255,${(1 - sp) * 0.5})`;
                 this.ctx.beginPath();
-                this.ctx.arc(sx, sy, 1.1, 0, Math.PI * 2);
+                this.ctx.arc(sx, sy, Math.max(0.7, zoom), 0, Math.PI * 2);
                 this.ctx.fill();
             }
         }
-
-        // Head: white core, gold corona, teal rim
-        const head = this.ctx.createRadialGradient(x, y, 0, x, y, 16);
-        head.addColorStop(0, 'rgba(255,255,255,0.95)');
-        head.addColorStop(0.3, 'rgba(255,235,180,0.75)');
-        head.addColorStop(0.7, 'rgba(110,231,183,0.3)');
-        head.addColorStop(1, 'rgba(110,231,183,0)');
-        this.ctx.fillStyle = head;
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, 16, 0, Math.PI * 2);
-        this.ctx.fill();
-        this.ctx.fillStyle = 'rgba(255,255,255,0.95)';
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, 2.6, 0, Math.PI * 2);
-        this.ctx.fill();
     }
 
     renderGalaxies(t) {
@@ -1814,10 +1850,16 @@ updateStarCount() {
             const shimmer = this._reducedMotion ? 0.7 : 0.55 + 0.45 * Math.sin(T * 0.0009 + b * 2.1);
             const A = 0.16 * env * shimmer * (forced ? 1.15 : 1);
             if (A <= 0.004) continue;
+            // Violet crowns the display, pink rides the middle, green hangs lowest
+            const hues = [
+                ['167,110,255', '139,92,246'],
+                ['255,110,199', '255,150,215'],
+                ['45,255,168', '110,231,183']
+            ][b];
             const grad = this.ctx.createLinearGradient(0, baseY - 20, 0, baseY + h);
-            grad.addColorStop(0, 'rgba(139,92,246,0)');
-            grad.addColorStop(0.55, `rgba(45,255,168,${A * 0.55})`);
-            grad.addColorStop(1, `rgba(110,231,183,${A})`);
+            grad.addColorStop(0, `rgba(${hues[1]},0)`);
+            grad.addColorStop(0.55, `rgba(${hues[0]},${A * 0.55})`);
+            grad.addColorStop(1, `rgba(${hues[1]},${A})`);
             this.ctx.fillStyle = grad;
             this.ctx.beginPath();
             const step = 34;
@@ -1935,8 +1977,11 @@ updateStarCount() {
                 twinkle *= magicalPulse;
                 
                 const alpha = star.brightness * twinkle;
+                const kissed = this._cometTouched.get(`${constellation.name}:${index}`) > timestamp;
                 let baseColor;
-                if (star.color) {
+                if (kissed) {
+                    baseColor = '170, 235, 255';
+                } else if (star.color) {
                     baseColor = star.color;
                 } else if (isHighlighted) {
                     baseColor = emotionalColor;
@@ -1952,6 +1997,12 @@ updateStarCount() {
                 this.ctx.arc(screenPos.x, screenPos.y, enhancedSize, 0, Math.PI * 2);
                 this.ctx.fill();
                 
+                if (kissed) {
+                    this.ctx.shadowColor = 'rgba(170, 235, 255, 0.9)';
+                    this.ctx.shadowBlur = 12 * this.viewState.zoom;
+                    this.ctx.fill();
+                    this.ctx.shadowBlur = 0;
+                }
                 if (isHighlighted || hasEmotionalEffect || (constellation.magicalIntensity || 3) > 3) {
                     this.ctx.shadowColor = `rgba(${emotionalColor}, 0.6)`;
                     this.ctx.shadowBlur = 8 * this.viewState.zoom;

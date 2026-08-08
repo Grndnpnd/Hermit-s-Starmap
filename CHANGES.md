@@ -181,3 +181,31 @@ multipliers — uniform, and the "chaotic" profile was high-frequency jitter
   - *anchor* — still never moves
 - Amplitudes and rates still scale from your data's movement profiles, so the
   per-constellation tuning you authored carries straight over.
+
+---
+
+# Movement v3, the real comet, richer aurora
+
+- **Fixed closed orbits (drift bug fixed).** v2's pole-wheel made constellations
+  slowly orbit away from their stations — breaking bearings. Every non-anchor
+  constellation now owns a FIXED tilted ellipse around its home, traced at its
+  own period (10–18h), direction, and tilt, with type epicycles at integer
+  multiples of the orbit rate so each path closes exactly and loops with no
+  seam. Purely periodic in continuous time: no reset, no drift, ever. All the
+  rotation/morphing character (crawl, breathing, fragment drift) is preserved;
+  wanderers spirograph, chaotics roam their neighbourhood — and everything is
+  back in its station every orbit, so the Throne is north and the Pack is
+  northwest forever.
+- **The comet is now real.** Uses the provided comet artwork (alpha-trimmed,
+  screen-blended, rotated to its heading) and — the big one — travels in WORLD
+  space: a random fixed arc through the star field each pass (deterministic per
+  pass), so it pans and zooms with the sky instead of floating awkwardly above
+  it. And when it crosses a star, that star turns comet-blue and swells for 30
+  seconds — background stars and constellation stars both, constellation stars
+  with a cyan glow. Watching it drag a line of blue through the Wolf Pack is
+  worth setting up on purpose.
+- **Aurora got its full palette:** violet crowns the display, pink rides the
+  middle curtain, green hangs lowest — matching real aurora altitude banding.
+  The module's screen aurora got the same treatment (stronger pink, new magenta
+  ribbon) in Frostfey Tundra v1.12.0, which also swaps its overlay comet to the
+  same artwork.
