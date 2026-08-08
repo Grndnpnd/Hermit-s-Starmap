@@ -61,6 +61,9 @@ class EnhancedStarMap {
         try {
             // Load saved state if available
             this.loadSavedState();
+
+            // URL parameters override saved state (shareable sky links)
+            this.applyURLParams();
             
             this.setupCanvas();
             this.setupEventListeners();
@@ -82,6 +85,41 @@ class EnhancedStarMap {
         }
     }
     
+    applyURLParams() {
+        const p = new URLSearchParams(window.location.search);
+        if ([...p.keys()].length === 0) return;
+
+        const seasonValues = ['all','late-bloom','high-spring','mid-summer','late-summer','mid-autumn','late-autumn','winter','deep-winter','equinox','solstice','eclipse'];
+        if (p.has('s') && seasonValues.includes(p.get('s'))) this.filters.season = p.get('s');
+
+        if (p.has('t')) {
+            const t = parseFloat(p.get('t'));
+            if (!isNaN(t) && t >= 0 && t <= 23) this.filters.timeOfNight = t;
+        }
+        if (p.has('se')) this.filters.showSpecialEvents = p.get('se') !== '0';
+        if (p.has('names')) this.displayOptions.showNames = p.get('names') !== '0';
+        if (p.has('lines')) this.displayOptions.showLines = p.get('lines') !== '0';
+        if (p.has('grid')) this.displayOptions.showGrid = p.get('grid') === '1';
+        if (p.has('e')) {
+            const valid = ['mourning','revelation','bargain','betrayal'];
+            this.filters.emotional = p.get('e').split(',').map(x => x.trim().toLowerCase()).filter(x => valid.includes(x));
+        }
+        this.updateUIFromState();
+        console.log('Applied sky settings from URL');
+    }
+
+    buildShareURL() {
+        const p = new URLSearchParams();
+        p.set('s', this.filters.season);
+        p.set('t', String(this.filters.timeOfNight));
+        p.set('se', this.filters.showSpecialEvents ? '1' : '0');
+        p.set('names', this.displayOptions.showNames ? '1' : '0');
+        p.set('lines', this.displayOptions.showLines ? '1' : '0');
+        p.set('grid', this.displayOptions.showGrid ? '1' : '0');
+        if (this.filters.emotional.length) p.set('e', this.filters.emotional.join(','));
+        return `${window.location.origin}${window.location.pathname}?${p.toString()}`;
+    }
+
     loadSavedState() {
         const savedState = window.EnhancedConstellationData?.StarMapState?.load();
         if (savedState) {
@@ -132,12 +170,11 @@ class EnhancedStarMap {
         ];
         
         toggles.forEach(toggle => {
-            const button = document.getElementById(toggle.id);
-            if (button) {
+            document.querySelectorAll(`[data-toggle="${toggle.option}"]`).forEach(button => {
                 const isEnabled = this.displayOptions[toggle.option];
                 button.textContent = isEnabled ? toggle.text[0] : toggle.text[1];
                 button.setAttribute('aria-pressed', isEnabled);
-            }
+            });
         });
     }
     
@@ -309,17 +346,35 @@ class EnhancedStarMap {
         ];
         
         displayToggles.forEach(toggle => {
-            const button = document.getElementById(toggle.id);
-            if (button) {
-                button.addEventListener('click', (e) => {
+            document.querySelectorAll(`[data-toggle="${toggle.option}"]`).forEach(button => {
+                button.addEventListener('click', () => {
                     this.displayOptions[toggle.option] = !this.displayOptions[toggle.option];
-                    const isEnabled = this.displayOptions[toggle.option];
-                    e.target.textContent = isEnabled ? toggle.text[0] : toggle.text[1];
-                    e.target.setAttribute('aria-pressed', isEnabled);
+                    this.updateDisplayToggleStates();
                     this.saveState();
                 });
-            }
+            });
         });
+
+        // Shareable sky links
+        const copyLink = document.getElementById('copy-sky-link');
+        if (copyLink) {
+            copyLink.addEventListener('click', async () => {
+                const url = this.buildShareURL();
+                try {
+                    await navigator.clipboard.writeText(url);
+                } catch (e) {
+                    const ta = document.createElement('textarea');
+                    ta.value = url; document.body.appendChild(ta); ta.select();
+                    document.execCommand('copy'); ta.remove();
+                }
+                const toast = document.getElementById('sky-link-toast');
+                if (toast) {
+                    toast.style.opacity = '1';
+                    clearTimeout(this._toastTimer);
+                    this._toastTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2200);
+                }
+            });
+        }
         
         // Detail panel
         const closeDetailButton = document.getElementById('close-detail');

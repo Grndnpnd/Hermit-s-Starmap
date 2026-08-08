@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Hermit's Star Map - Interactive Feywild constellation guide with state persistence">
     <title>Hermit's Star Map - Feywild Constellations</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./css/tailwind.css">
     <link rel="stylesheet" href="./css/styles.css">
 </head>
 <body class="bg-gradient-to-b from-indigo-900 via-purple-900 to-black min-h-screen text-white overflow-hidden">
@@ -144,7 +144,10 @@
                     <button id="pan-se" class="bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded text-xs transition-colors" aria-label="Pan southeast">↘</button>
                 </div>
 
-                <button id="reset-view" class="w-full bg-indigo-700 hover:bg-indigo-600 px-3 py-2 rounded text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                <button id="copy-sky-link" class="w-full bg-purple-800 hover:bg-purple-700 px-3 py-2 rounded text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 mb-2" title="Copy a link that opens the map with the current season, time, filters, and display settings">
+                        🔗 Copy Link to This Sky
+                    </button>
+                    <button id="reset-view" class="w-full bg-indigo-700 hover:bg-indigo-600 px-3 py-2 rounded text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400">
                     Reset View
                 </button>
                 
@@ -165,13 +168,13 @@
                 </h2>
                 
                 <div class="space-y-2">
-                    <button id="toggle-constellation-names" class="w-full bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-sm transition-colors text-left" aria-pressed="true">
+                    <button id="toggle-constellation-names" data-toggle="showNames" class="w-full bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-sm transition-colors text-left" aria-pressed="true">
                         Hide Names
                     </button>
-                    <button id="toggle-constellation-lines" class="w-full bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-sm transition-colors text-left" aria-pressed="true">
+                    <button id="toggle-constellation-lines" data-toggle="showLines" class="w-full bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-sm transition-colors text-left" aria-pressed="true">
                         Hide Lines
                     </button>
-                    <button id="toggle-grid" class="w-full bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-sm transition-colors text-left" aria-pressed="false">
+                    <button id="toggle-grid" data-toggle="showGrid" class="w-full bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded text-sm transition-colors text-left" aria-pressed="false">
                         Show Grid
                     </button>
                 </div>
@@ -213,13 +216,13 @@
             
             <!-- Enhanced Canvas Overlay Controls -->
             <div class="absolute top-4 right-4 flex flex-col space-y-2 z-10">
-                <button id="toggle-constellation-names" class="bg-black bg-opacity-50 backdrop-blur-sm text-white px-3 py-2 rounded border border-purple-500 border-opacity-30 hover:bg-opacity-70 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400" aria-pressed="true">
+                <button id="overlay-toggle-names" data-toggle="showNames" class="bg-black bg-opacity-50 backdrop-blur-sm text-white px-3 py-2 rounded border border-purple-500 border-opacity-30 hover:bg-opacity-70 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400" aria-pressed="true">
                     Show Names
                 </button>
-                <button id="toggle-constellation-lines" class="bg-black bg-opacity-50 backdrop-blur-sm text-white px-3 py-2 rounded border border-purple-500 border-opacity-30 hover:bg-opacity-70 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400" aria-pressed="true">
+                <button id="overlay-toggle-lines" data-toggle="showLines" class="bg-black bg-opacity-50 backdrop-blur-sm text-white px-3 py-2 rounded border border-purple-500 border-opacity-30 hover:bg-opacity-70 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400" aria-pressed="true">
                     Show Lines
                 </button>
-                <button id="toggle-grid" class="bg-black bg-opacity-50 backdrop-blur-sm text-white px-3 py-2 rounded border border-purple-500 border-opacity-30 hover:bg-opacity-70 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400" aria-pressed="false">
+                <button id="overlay-toggle-grid" data-toggle="showGrid" class="bg-black bg-opacity-50 backdrop-blur-sm text-white px-3 py-2 rounded border border-purple-500 border-opacity-30 hover:bg-opacity-70 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400" aria-pressed="false">
                     Show Grid
                 </button>
             </div>
@@ -446,5 +449,6 @@
             updatePerformanceStats();
         });
     </script>
+    <div id="sky-link-toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-purple-900 border border-purple-400 text-purple-100 px-4 py-2 rounded-lg shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 z-50" role="status">Link copied — this sky is now shareable ✦</div>
 </body>
 </html>
