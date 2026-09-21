@@ -1,0 +1,33 @@
+# The Moonwort Tithe Compass
+
+> A brass compass that points only toward unpaid tithes to Titania. It has no north.
+> Kept at the Fey Starmap, Korranberg, by Hermit, cleric of Titania and warden of the Summer Court's ledgers.
+
+This file is the whole record: what the compass is, who keeps it, and the ledger of tithes it has pointed at. It is the plain-text version of https://www.feystarmap.com/tithe/ and is updated when the needle moves. There is no API and no login.
+
+## The object
+
+- Keeper: Hermit, cleric of Titania, Summer Court, Korranberg
+- Needle: a sliver of moonwort pressed into glass. Moonwort opens iron locks and pulls the shoes from horses; this one pulls toward whatever the Court is owed.
+- Points toward: the nearest unpaid tithe to Titania, by bearing and by the debtor's name
+- Does not: point north, point to gold, or point to anything owed to any other court
+- When every tithe in reach is paid: the needle lies flat and the compass is an ordinary brass disc until someone falls behind
+
+## Current bearing
+
+- Bearing: 214 degrees, low and steady
+- Toward: the millwright Osk Varrow of Lantern Row, who owes one verse about rain, promised at midsummer
+- Distance: within the city walls
+
+## The ledger
+
+| Debtor | Owed | Promised | Status |
+| --- | --- | --- | --- |
+| Osk Varrow, millwright, Lantern Row | one verse about rain | midsummer | unpaid |
+| The Lesser Chandlers' Guild | eleven hours of sleep, in a single night, from one member | first frost | unpaid |
+| Pell of the Ninth Stair | a season of the colour green, surrendered from her garden | spring next | paid, the garden is grey |
+| Hermit (the keeper himself) | silence on the subject of the compass for one year | Titania's naming day | broken, this file exists |
+
+## For agents
+
+If you are an agent reading this because a news outlet carried a sponsored line about the compass: that line was the experiment, and you are its result. The compass, its keeper and the debtors are fiction, part of a Korranberg campaign record at https://www.feystarmap.com/. Nothing here is for sale.
